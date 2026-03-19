@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C-OS Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="page-bg" aria-hidden="true"></div>
+    <main class="layout">
+      <header class="hero">
+        <p class="eyebrow">Cognitive OS</p>
+        <h1>Your Thinking Timeline</h1>
+        <p class="lead">
+          Write ideas in plain language. C-OS tracks what changed, when it changed, and what patterns repeat.
+        </p>
+      </header>
+
+      <section class="panel quick-start">
+        <h2>Start Here</h2>
+        <div class="steps">
+          <article>
+            <span>1</span>
+            <p>Paste a note in "Save A Thought".</p>
+          </article>
+          <article>
+            <span>2</span>
+            <p>Use "Ask Memory" to search what you already said.</p>
+          </article>
+          <article>
+            <span>3</span>
+            <p>Use "What Was True On Date" for time-based recall.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Save A Thought</h2>
+          <form id="ingestForm">
+            <label for="source">Where is this from?</label>
+            <input id="source" name="source" placeholder="Journal, project notes, meeting..." />
+
+            <label for="validFrom">When did this become true? (optional)</label>
+            <input id="validFrom" name="validFrom" type="datetime-local" />
+
+            <label for="noteText">Your note</label>
+            <textarea
+              id="noteText"
+              name="noteText"
+              rows="8"
+              placeholder="Example: 2025-01-02 Atlas is active. Atlas uses Neo4j."
+              required
+            ></textarea>
+
+            <div class="actions">
+              <button type="button" id="loadSample" class="ghost">Load Example</button>
+              <button type="submit">Save To Memory</button>
+            </div>
+          </form>
+          <pre id="ingestResult" class="result"></pre>
+        </article>
+
+        <article class="panel">
+          <h2>Ask Memory</h2>
+          <form id="retrieveForm">
+            <label for="question">Question</label>
+            <input id="question" name="question" placeholder="What tools does Atlas use?" required />
+
+            <label for="mode">Type of question</label>
+            <select id="mode" name="mode">
+              <option value="factual">Specific fact</option>
+              <option value="exploratory" selected>Open exploration</option>
+              <option value="temporal">Time-aware</option>
+            </select>
+
+            <button type="submit">Find Answers</button>
+          </form>
+          <div id="retrieveResult" class="result-block"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>What Was True On Date</h2>
+          <form id="temporalForm">
+            <label for="atDate">Date and time</label>
+            <input id="atDate" name="atDate" type="datetime-local" required />
+
+            <label for="entity">Focus topic (optional)</label>
+            <input id="entity" name="entity" placeholder="Atlas, Python, Startup..." />
+
+            <button type="submit">Check Timeline</button>
+          </form>
+          <div id="temporalResult" class="result-block"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Insight Panel</h2>
+            <button id="refreshInsights" class="ghost">Refresh</button>
+          </div>
+          <div id="insightResult" class="result-block"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Coach Mode</h2>
+          <form id="coachForm">
+            <label for="persona">I am a...</label>
+            <select id="persona" name="persona">
+              <option value="general" selected>General user</option>
+              <option value="student">Student</option>
+              <option value="founder">Founder</option>
+              <option value="manager">Manager</option>
+              <option value="creator">Creator</option>
+            </select>
+
+            <label for="focusArea">Focus area (optional)</label>
+            <input id="focusArea" name="focusArea" placeholder="Focus, consistency, project completion..." />
+
+            <label for="reflection">Optional reflection for today</label>
+            <textarea
+              id="reflection"
+              name="reflection"
+              rows="6"
+              placeholder="Example: I kept delaying onboarding docs and started another side project."
+            ></textarea>
+
+            <div class="actions">
+              <button type="button" id="coachAdviceBtn">Get Advice From Existing Memory</button>
+              <button type="button" id="coachCheckinBtn" class="ghost">Save Reflection + Get Advice</button>
+            </div>
+          </form>
+          <div id="coachResult" class="result-block"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>People Templates</h2>
+            <button id="refreshPersonas" class="ghost">Refresh</button>
+          </div>
+          <div id="personaResult" class="result-block"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
