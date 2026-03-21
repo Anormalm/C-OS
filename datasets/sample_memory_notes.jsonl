@@ -1,0 +1,20 @@
+{"text":"2025-01-03 Atlas is active. Atlas uses Neo4j. Atlas requires GPU cluster.","source_type":"note","source_uri":"sample://founder/001","valid_from":"2025-01-03T09:00:00Z","metadata":{"persona":"founder","theme":"execution"}}
+{"text":"I delayed onboarding docs because requirements were unclear.","source_type":"checkin","source_uri":"sample://founder/002","valid_from":"2025-01-05T09:00:00Z","metadata":{"persona":"founder","theme":"friction"}}
+{"text":"Breaking milestones into one-day tasks increases shipping speed.","source_type":"note","source_uri":"sample://founder/003","valid_from":"2025-01-08T09:00:00Z","metadata":{"persona":"founder","theme":"planning"}}
+{"text":"2025-02-11 Atlas is paused.","source_type":"note","source_uri":"sample://founder/004","valid_from":"2025-02-11T09:00:00Z","metadata":{"persona":"founder","theme":"stall"}}
+{"text":"Nova supports onboarding. Nova leads to better retention.","source_type":"note","source_uri":"sample://manager/001","valid_from":"2025-02-01T09:00:00Z","metadata":{"persona":"manager","theme":"team"}}
+{"text":"I repeat context in meetings when project glossary is missing.","source_type":"checkin","source_uri":"sample://manager/002","valid_from":"2025-02-03T09:00:00Z","metadata":{"persona":"manager","theme":"communication"}}
+{"text":"Creating a shared definition list reduces team contradictions.","source_type":"note","source_uri":"sample://manager/003","valid_from":"2025-02-06T09:00:00Z","metadata":{"persona":"manager","theme":"alignment"}}
+{"text":"Beacon requires stakeholder mapping before execution.","source_type":"note","source_uri":"sample://manager/004","valid_from":"2025-02-10T09:00:00Z","metadata":{"persona":"manager","theme":"dependency"}}
+{"text":"2025-02-20 Beacon is active.","source_type":"note","source_uri":"sample://manager/005","valid_from":"2025-02-20T09:00:00Z","metadata":{"persona":"manager","theme":"status"}}
+{"text":"Orbit uses spaced repetition. Orbit supports exam prep.","source_type":"note","source_uri":"sample://student/001","valid_from":"2025-01-15T09:00:00Z","metadata":{"persona":"student","theme":"study"}}
+{"text":"I abandon revision plans when they exceed 90 minutes.","source_type":"checkin","source_uri":"sample://student/002","valid_from":"2025-01-17T09:00:00Z","metadata":{"persona":"student","theme":"focus"}}
+{"text":"Short revision blocks lead to better consistency.","source_type":"note","source_uri":"sample://student/003","valid_from":"2025-01-18T09:00:00Z","metadata":{"persona":"student","theme":"habit"}}
+{"text":"2025-02-05 Orbit is paused.","source_type":"note","source_uri":"sample://student/004","valid_from":"2025-02-05T09:00:00Z","metadata":{"persona":"student","theme":"stall"}}
+{"text":"Orbit is active after switching to 30 minute sessions.","source_type":"note","source_uri":"sample://student/005","valid_from":"2025-02-12T09:00:00Z","metadata":{"persona":"student","theme":"recovery"}}
+{"text":"Studio uses weekly publishing cycle.","source_type":"note","source_uri":"sample://creator/001","valid_from":"2025-01-09T09:00:00Z","metadata":{"persona":"creator","theme":"output"}}
+{"text":"I keep refining scripts and delay recording.","source_type":"checkin","source_uri":"sample://creator/002","valid_from":"2025-01-10T09:00:00Z","metadata":{"persona":"creator","theme":"perfectionism"}}
+{"text":"Publishing rough drafts increases momentum.","source_type":"note","source_uri":"sample://creator/003","valid_from":"2025-01-14T09:00:00Z","metadata":{"persona":"creator","theme":"momentum"}}
+{"text":"Studio requires content backlog before launch week.","source_type":"note","source_uri":"sample://creator/004","valid_from":"2025-01-20T09:00:00Z","metadata":{"persona":"creator","theme":"planning"}}
+{"text":"2025-02-02 Studio is blocked.","source_type":"note","source_uri":"sample://creator/005","valid_from":"2025-02-02T09:00:00Z","metadata":{"persona":"creator","theme":"risk"}}
+{"text":"Weekly reflection helps me restart blocked creative tasks.","source_type":"note","source_uri":"sample://creator/006","valid_from":"2025-02-08T09:00:00Z","metadata":{"persona":"creator","theme":"recovery"}}

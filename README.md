@@ -1,23 +1,28 @@
-# COGNITIVE OS (C-OS)
+# COGNITIVE OS (C-OS) v0.1.0
 
-C-OS is a persistent cognitive memory system that tracks how ideas evolve over time.
+C-OS is a persistent, evolving cognitive memory system for tracking how people think over time.
 
-It is built to model:
+It models:
 - ideas
 - knowledge
 - time
 - contradictions
 - evolution of thought
 
-## What It Provides
+## Launch Highlights
 
-- Temporal reified graph memory (`valid_from`, `valid_to`, `ingestion_time`).
-- Hybrid retrieval (vector candidates + graph context + dynamic re-ranking).
-- Contradiction-aware versioning (conflicts are tracked, not deleted).
-- Non-technical web UI with memory query and coach guidance.
-- API-first architecture for integration into other products.
+- Temporal graph memory with contradiction-aware fact versioning.
+- Hybrid retrieval (vector + graph + dynamic scoring).
+- Non-technical UI with onboarding, coach mode, weekly summary, and quality dashboard.
+- Built-in evaluation harness (`hybrid vs vector`) with `Hit@K`.
+- Sprint 1-4 launch package ready for public release.
 
-## 5-Minute Quickstart
+## Product Preview
+
+![C-OS Workspace](docs/assets/ui-home.svg)
+![C-OS Quality Panel](docs/assets/quality-dashboard.svg)
+
+## Quickstart
 
 ### Local
 
@@ -27,7 +32,7 @@ uvicorn cos.app:app --reload
 ```
 
 Open:
-- UI workspace: `http://127.0.0.1:8000/`
+- UI: `http://127.0.0.1:8000/`
 - API docs: `http://127.0.0.1:8000/docs`
 
 ### Docker
@@ -37,76 +42,65 @@ docker compose up --build
 ```
 
 Open:
-- UI workspace: `http://127.0.0.1:8000/`
-- Neo4j browser: `http://127.0.0.1:7474/`
+- UI: `http://127.0.0.1:8000/`
+- Neo4j: `http://127.0.0.1:7474/`
 
-More setup detail: [QUICKSTART.md](docs/QUICKSTART.md)
+Detailed setup: [QUICKSTART.md](docs/QUICKSTART.md)
 
-## Architecture
+## Demo Package
 
-See full diagram and layer breakdown in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- Demo guide: [DEMO.md](docs/DEMO.md)
+- Video narration: [DEMO_VIDEO_SCRIPT.md](docs/DEMO_VIDEO_SCRIPT.md)
+- Target output file: `docs/assets/demo-video.mp4`
 
-Core model:
-- `EntityNode`
-- `StatementNode` (reified fact with provenance/confidence and bi-temporal fields)
+## Sample Dataset
 
-## Non-Technical User Flow
+- Dataset: [sample_memory_notes.jsonl](datasets/sample_memory_notes.jsonl)
+- Dataset docs: [datasets/README.md](datasets/README.md)
+- Loader script:
 
-At `http://127.0.0.1:8000/`:
+```bash
+python -m cos.experiments.load_sample_dataset
+```
 
-1. `Save A Thought`
-2. `Ask Memory`
-3. `What Was True On Date`
-4. `Coach Mode` for practical next-step advice
-5. `Onboarding Progress` and `Weekly Summary`
+## Core UX Flow
+
+1. Onboarding Progress
+2. Save A Thought
+3. Ask Memory
+4. Coach Mode + feedback
+5. Weekly Summary
+6. Quality Dashboard + Evaluation Harness
 
 ## API Highlights
 
 - `POST /ingest/text`
 - `POST /query/retrieve`
 - `POST /query/temporal`
-- `GET /insights/summary`
 - `POST /coach/advice`
 - `POST /coach/checkin`
 - `POST /coach/feedback`
-- `GET /coach/feedback/summary`
-- `GET /coach/personas`
-- `GET /onboarding/status`
-- `POST /onboarding/starter-pack`
 - `POST /summary/weekly`
+- `POST /evaluation/run`
+- `GET /quality/dashboard`
 
-## Evaluation And Benchmarks
+## Evaluation
 
-Benchmark notes: [EVALUATION.md](docs/EVALUATION.md)
-
-Run retrieval benchmark:
+- Evaluation docs: [EVALUATION.md](docs/EVALUATION.md)
+- Benchmark script:
 
 ```bash
 python -m cos.experiments.benchmark_retrieval
 ```
 
-## Publishability Checklist Included
+## Release Notes
 
-- MIT license
-- security policy
-- contributing guide
-- code of conduct
-- changelog
-- CI (`ruff`, unit tests, API smoke tests)
-- Dockerfile + docker-compose
+- [v0.1.0 release notes](docs/releases/v0.1.0.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
-## Repository Layout
+## Governance
 
-```
-/cos
-  /ingestion
-  /extraction
-  /graph
-  /vector
-  /resolution
-  /temporal
-  /inference
-  /ui
-  /configs
-  /experiments
-```
+- [LICENSE](LICENSE)
+- [SECURITY.md](SECURITY.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)

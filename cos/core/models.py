@@ -237,3 +237,32 @@ class WeeklySummaryResponse(BaseModel):
     wins: list[str]
     recommended_next_actions: list[str]
     stats: dict[str, Any]
+
+
+class EvaluationRunRequest(BaseModel):
+    top_k: int = Field(default=3, ge=1, le=10)
+    dataset: str = "default"
+
+
+class EvaluationRunResponse(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    dataset: str
+    top_k: int
+    case_count: int
+    hybrid_hit_at_k: float
+    vector_hit_at_k: float
+    gain_over_vector: float
+    notes: list[str] = Field(default_factory=list)
+
+
+class QualityDashboardResponse(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    onboarding_progress: float
+    advice_useful_rate: float
+    retrieval_queries: int
+    ingestion_documents: int
+    contradiction_rate: float
+    deduplication_rate: float
+    latency_ms_avg: dict[str, float]
+    last_evaluation: EvaluationRunResponse | None = None
+    recommendations: list[str]

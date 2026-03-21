@@ -12,6 +12,14 @@ Run:
 python -m cos.experiments.benchmark_retrieval
 ```
 
+Or from API:
+
+```bash
+curl -X POST http://127.0.0.1:8000/evaluation/run \
+  -H "Content-Type: application/json" \
+  -d "{\"top_k\":3,\"dataset\":\"default\"}"
+```
+
 Current metric:
 - `Hit@3` for expected facts.
 

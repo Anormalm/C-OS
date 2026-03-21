@@ -12,9 +12,12 @@ from cos.core.models import (
     CheckinRequest,
     CheckinResponse,
     Document,
+    EvaluationRunRequest,
+    EvaluationRunResponse,
     OnboardingStatus,
     IngestionRequest,
     IngestionResponse,
+    QualityDashboardResponse,
     RetrievalRequest,
     RetrievalResult,
     StatementNode,
@@ -23,6 +26,7 @@ from cos.core.models import (
     WeeklySummaryResponse,
 )
 from cos.diagnostics.metrics import LatencyTimer, MetricsRegistry
+from cos.inference.evaluation import EvaluationService
 from cos.extraction.extractor import ExtractionService
 from cos.graph.base import GraphStore
 from cos.graph.in_memory import InMemoryGraphStore
@@ -66,6 +70,11 @@ class COSRuntime:
             advice_service=self.advice,
             feedback_service=self.feedback,
         )
+        self.evaluation = EvaluationService(
+            runtime_factory=lambda: COSRuntime(settings),
+            feedback_service=self.feedback,
+        )
+        self.last_evaluation: EvaluationRunResponse | None = None
 
     def _build_graph_store(self) -> GraphStore:
         if self.settings.graph_backend.lower() == "neo4j":
@@ -206,3 +215,45 @@ class COSRuntime:
         with LatencyTimer(self.metrics, "weekly_summary_ms"):
             self.metrics.inc("weekly_summaries_generated")
             return self.weekly_summary_service.generate(request)
+
+    def run_evaluation(self, request: EvaluationRunRequest) -> EvaluationRunResponse:
+        with LatencyTimer(self.metrics, "evaluation_ms"):
+            result = self.evaluation.run(request)
+            self.last_evaluation = result
+            self.metrics.inc("evaluation_runs")
+            return result
+
+    def quality_dashboard(self) -> QualityDashboardResponse:
+        with LatencyTimer(self.metrics, "quality_dashboard_ms"):
+            onboarding = self.onboarding.status()
+            feedback = self.feedback.summary()
+            insights = self.insights.summarize()
+            snapshot = self.metrics.snapshot()
+            counters = snapshot.get("counters", {})
+            latency_avg = snapshot.get("latency_ms_avg", {})
+
+            recommendations = []
+            if onboarding.progress_ratio < 1.0:
+                recommendations.append("Complete onboarding milestones for better model calibration.")
+            if feedback.total and feedback.useful_rate < 0.6:
+                recommendations.append("Advice usefulness is low; revise advice heuristics and prompts.")
+            if not feedback.total:
+                recommendations.append("Collect user feedback on advice to improve quality tracking.")
+            if counters.get("retrieval_queries", 0) < 3:
+                recommendations.append("Run more retrieval queries before judging memory quality.")
+            if "retrieval_ms" in latency_avg and latency_avg["retrieval_ms"] > 500:
+                recommendations.append("Retrieval latency exceeds target; optimize graph expansion weights.")
+            if not recommendations:
+                recommendations.append("Quality signals look healthy; continue collecting production data.")
+
+            return QualityDashboardResponse(
+                onboarding_progress=onboarding.progress_ratio,
+                advice_useful_rate=feedback.useful_rate,
+                retrieval_queries=counters.get("retrieval_queries", 0),
+                ingestion_documents=counters.get("documents_ingested", 0),
+                contradiction_rate=insights.contradiction_rate,
+                deduplication_rate=insights.deduplication_rate,
+                latency_ms_avg=latency_avg,
+                last_evaluation=self.last_evaluation,
+                recommendations=recommendations,
+            )

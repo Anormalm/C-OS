@@ -25,3 +25,10 @@
 1. In UI, use `Save A Thought`.
 2. Ask a question in `Ask Memory`.
 3. Open `Coach Mode` and request advice.
+
+## Launch Demo Flow
+
+1. Load sample dataset:
+   - `python -m cos.experiments.load_sample_dataset`
+2. Open quality dashboard in UI.
+3. Run evaluation harness with Hit@3.

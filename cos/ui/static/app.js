@@ -9,6 +9,8 @@ const coachResult = document.getElementById("coachResult");
 const personaResult = document.getElementById("personaResult");
 const onboardingResult = document.getElementById("onboardingResult");
 const weeklyResult = document.getElementById("weeklyResult");
+const qualityResult = document.getElementById("qualityResult");
+const evaluationResult = document.getElementById("evaluationResult");
 const loadSampleBtn = document.getElementById("loadSample");
 const refreshInsightsBtn = document.getElementById("refreshInsights");
 const coachAdviceBtn = document.getElementById("coachAdviceBtn");
@@ -17,6 +19,8 @@ const refreshPersonasBtn = document.getElementById("refreshPersonas");
 const refreshOnboardingBtn = document.getElementById("refreshOnboarding");
 const loadStarterPackBtn = document.getElementById("loadStarterPack");
 const runWeeklySummaryBtn = document.getElementById("runWeeklySummary");
+const refreshQualityBtn = document.getElementById("refreshQuality");
+const runEvaluationBtn = document.getElementById("runEvaluation");
 let lastCoachContext = { persona: "general", focus: null };
 
 async function api(path, method = "GET", body = null) {
@@ -90,6 +94,7 @@ ingestForm.addEventListener("submit", async (event) => {
       `- Contradictions tracked: ${result.contradictions}`;
     refreshInsights();
     refreshOnboarding();
+    refreshQuality();
   } catch (error) {
     ingestResult.textContent = `Could not save thought: ${error.message}`;
   }
@@ -123,6 +128,7 @@ retrieveForm.addEventListener("submit", async (event) => {
       "Nothing matched yet. Add more notes first."
     );
     refreshOnboarding();
+    refreshQuality();
   } catch (error) {
     retrieveResult.innerHTML = `<p class="meta">Search failed: ${error.message}</p>`;
   }
@@ -251,6 +257,7 @@ coachCheckinBtn.addEventListener("click", async () => {
     coachResult.innerHTML = renderAdvice(result.advice, result.ingestion);
     refreshInsights();
     refreshOnboarding();
+    refreshQuality();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Check-in failed: ${escapeHtml(error.message)}</p>`;
   }
@@ -356,6 +363,73 @@ async function runWeeklySummary() {
 
 runWeeklySummaryBtn.addEventListener("click", runWeeklySummary);
 
+async function refreshQuality() {
+  setBusy(qualityResult, "Loading quality dashboard...");
+  try {
+    const result = await api("/quality/dashboard");
+    qualityResult.innerHTML = `
+      <div class="card-list">
+        <article class="memory-card">
+          <p><strong>Onboarding Progress</strong></p>
+          <p>${((result.onboarding_progress || 0) * 100).toFixed(0)}%</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Advice Useful Rate</strong></p>
+          <p>${((result.advice_useful_rate || 0) * 100).toFixed(1)}%</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Retrieval Queries</strong></p>
+          <p>${result.retrieval_queries || 0}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Avg Retrieval Latency</strong></p>
+          <p>${((result.latency_ms_avg || {}).retrieval_ms || 0).toFixed(1)} ms</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Quality Recommendations</strong></p>
+          <p class="meta">${(result.recommendations || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+      </div>
+    `;
+  } catch (error) {
+    qualityResult.innerHTML = `<p class="meta">Dashboard failed: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function runEvaluation() {
+  setBusy(evaluationResult, "Running benchmark...");
+  try {
+    const topK = Number(document.getElementById("evaluationTopK").value || "3");
+    const result = await api("/evaluation/run", "POST", { top_k: topK, dataset: "default" });
+    evaluationResult.innerHTML = `
+      <div class="card-list">
+        <article class="memory-card">
+          <p><strong>Hybrid Hit@${result.top_k}</strong></p>
+          <p>${((result.hybrid_hit_at_k || 0) * 100).toFixed(1)}%</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Vector Hit@${result.top_k}</strong></p>
+          <p>${((result.vector_hit_at_k || 0) * 100).toFixed(1)}%</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Gain</strong></p>
+          <p>${(result.gain_over_vector || 0).toFixed(3)}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Notes</strong></p>
+          <p class="meta">${(result.notes || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+      </div>
+    `;
+    refreshQuality();
+  } catch (error) {
+    evaluationResult.innerHTML = `<p class="meta">Benchmark failed: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+refreshQualityBtn.addEventListener("click", refreshQuality);
+runEvaluationBtn.addEventListener("click", runEvaluation);
+
 coachResult.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
@@ -379,9 +453,11 @@ coachResult.addEventListener("click", async (event) => {
       context_focus: lastCoachContext.focus || null
     });
     target.textContent = rating === "useful" ? "Saved Useful" : "Saved Not Useful";
+    refreshQuality();
   } catch (error) {
     target.textContent = "Retry";
   }
 });
 
 refreshOnboarding();
+refreshQuality();

@@ -10,3 +10,9 @@ All notable changes to this project are documented in this file.
 - Non-technical web workspace with timeline and coach flows.
 - Contradiction tracking with versioned fact handling.
 - Basic automated tests for retrieval, temporal correctness, and advice generation.
+- Onboarding progress flow and starter pack endpoint.
+- Advice feedback capture and feedback summary tracking.
+- Weekly summary generation endpoint and UI.
+- Evaluation harness endpoint (`/evaluation/run`) with hybrid vs vector quality metrics.
+- Quality dashboard endpoint (`/quality/dashboard`) with actionable recommendations.
+- Launch assets package: sample dataset, dataset loader, demo video script, release notes.

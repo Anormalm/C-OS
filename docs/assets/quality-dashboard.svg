@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#f1ead8"/>
+  <rect x="70" y="70" width="1060" height="535" rx="24" fill="#fffdf7" stroke="#d8cebb" stroke-width="2"/>
+  <text x="110" y="140" font-family="Verdana, sans-serif" font-size="40" font-weight="700" fill="#1f2a2a">Quality Dashboard</text>
+  <rect x="110" y="190" width="240" height="120" rx="12" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="370" y="190" width="240" height="120" rx="12" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="630" y="190" width="240" height="120" rx="12" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="890" y="190" width="190" height="120" rx="12" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="110" y="340" width="970" height="225" rx="12" fill="#f7f9fb" stroke="#d8dee6"/>
+  <text x="130" y="235" font-family="Verdana, sans-serif" font-size="18" fill="#0f766e">Onboarding</text>
+  <text x="390" y="235" font-family="Verdana, sans-serif" font-size="18" fill="#0f766e">Advice Usefulness</text>
+  <text x="650" y="235" font-family="Verdana, sans-serif" font-size="18" fill="#0f766e">Retrieval Latency</text>
+  <text x="910" y="235" font-family="Verdana, sans-serif" font-size="18" fill="#0f766e">Eval</text>
+  <text x="130" y="380" font-family="Verdana, sans-serif" font-size="22" fill="#1f2a2a">Recommendations</text>
+  <text x="130" y="420" font-family="Verdana, sans-serif" font-size="18" fill="#56615f">- Placeholder launch screenshot for release package</text>
+  <text x="130" y="450" font-family="Verdana, sans-serif" font-size="18" fill="#56615f">- Replace with real capture from /quality/dashboard panel</text>
+</svg>

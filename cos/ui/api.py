@@ -6,6 +6,7 @@ from cos.core.models import (
     AdviceFeedbackRequest,
     AdviceRequest,
     CheckinRequest,
+    EvaluationRunRequest,
     IngestionRequest,
     RetrievalRequest,
     TemporalQueryRequest,
@@ -121,6 +122,14 @@ def create_router(runtime: COSRuntime, async_queue: AsyncIngestionQueue) -> APIR
     @router.post("/summary/weekly")
     def weekly_summary(request: WeeklySummaryRequest):
         return runtime.weekly_summary(request)
+
+    @router.post("/evaluation/run")
+    def evaluation_run(request: EvaluationRunRequest):
+        return runtime.run_evaluation(request)
+
+    @router.get("/quality/dashboard")
+    def quality_dashboard():
+        return runtime.quality_dashboard()
 
     @router.get("/diagnostics/metrics")
     def metrics():

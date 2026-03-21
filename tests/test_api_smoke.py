@@ -56,3 +56,14 @@ def test_sprint2_endpoints_smoke():
             },
         )
         assert feedback.status_code == 200
+
+
+def test_sprint3_quality_endpoints_smoke():
+    with TestClient(app) as client:
+        evaluate = client.post("/evaluation/run", json={"top_k": 3, "dataset": "default"})
+        assert evaluate.status_code == 200
+        assert "hybrid_hit_at_k" in evaluate.json()
+
+        dashboard = client.get("/quality/dashboard")
+        assert dashboard.status_code == 200
+        assert "recommendations" in dashboard.json()

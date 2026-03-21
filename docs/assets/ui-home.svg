@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8f4e8"/>
+      <stop offset="100%" stop-color="#efe6d2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect x="60" y="60" width="1080" height="555" rx="24" fill="#fffdf7" stroke="#d8cebb" stroke-width="2"/>
+  <text x="100" y="130" font-family="Verdana, sans-serif" font-size="42" font-weight="700" fill="#1f2a2a">C-OS Workspace</text>
+  <text x="100" y="180" font-family="Verdana, sans-serif" font-size="22" fill="#56615f">Placeholder launch screenshot</text>
+  <rect x="100" y="220" width="480" height="330" rx="14" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="620" y="220" width="480" height="150" rx="14" fill="#f7f9fb" stroke="#d8dee6"/>
+  <rect x="620" y="400" width="480" height="150" rx="14" fill="#f7f9fb" stroke="#d8dee6"/>
+  <text x="130" y="260" font-family="Verdana, sans-serif" font-size="20" fill="#0f766e">Save A Thought</text>
+  <text x="650" y="260" font-family="Verdana, sans-serif" font-size="20" fill="#0f766e">Coach Mode</text>
+  <text x="650" y="440" font-family="Verdana, sans-serif" font-size="20" fill="#0f766e">Quality Dashboard</text>
+</svg>

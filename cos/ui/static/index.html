@@ -76,6 +76,33 @@
 
       <section class="grid">
         <article class="panel">
+          <div class="panel-head">
+            <h2>Quality Dashboard</h2>
+            <button id="refreshQuality" class="ghost">Refresh</button>
+          </div>
+          <p class="meta">
+            Track system quality signals: onboarding progress, advice usefulness, retrieval volume, and latency.
+          </p>
+          <div id="qualityResult" class="result-block"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Evaluation Harness</h2>
+            <button id="runEvaluation" class="ghost">Run Benchmark</button>
+          </div>
+          <label for="evaluationTopK">Hit@K</label>
+          <select id="evaluationTopK">
+            <option value="1">1</option>
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
+          </select>
+          <div id="evaluationResult" class="result-block"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
           <h2>Save A Thought</h2>
           <form id="ingestForm">
             <label for="source">Where is this from?</label>
