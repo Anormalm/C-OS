@@ -6,15 +6,21 @@ from cos.configs.settings import Settings
 from cos.core.models import (
     AdviceRequest,
     AdviceResponse,
+    AdviceFeedbackEvent,
+    AdviceFeedbackRequest,
+    AdviceFeedbackSummary,
     CheckinRequest,
     CheckinResponse,
     Document,
+    OnboardingStatus,
     IngestionRequest,
     IngestionResponse,
     RetrievalRequest,
     RetrievalResult,
     StatementNode,
     TemporalQueryRequest,
+    WeeklySummaryRequest,
+    WeeklySummaryResponse,
 )
 from cos.diagnostics.metrics import LatencyTimer, MetricsRegistry
 from cos.extraction.extractor import ExtractionService
@@ -22,8 +28,11 @@ from cos.graph.base import GraphStore
 from cos.graph.in_memory import InMemoryGraphStore
 from cos.graph.neo4j_store import Neo4jGraphStore
 from cos.inference.advice import AdviceService
+from cos.inference.feedback import FeedbackService
 from cos.ingestion.service import IngestionService
 from cos.inference.insights import InsightService
+from cos.inference.onboarding import OnboardingService
+from cos.inference.weekly_summary import WeeklySummaryService
 from cos.resolution.service import ResolutionService
 from cos.temporal.queries import TemporalQueryService
 from cos.temporal.trajectory import TrajectoryAnalyzer
@@ -50,6 +59,13 @@ class COSRuntime:
         self.retriever = HybridRetriever(self.graph_store, self.vector_store, self.embedder)
         self.insights = InsightService(self.graph_store, self.metrics)
         self.advice = AdviceService(self.graph_store, self.insights)
+        self.feedback = FeedbackService(log_path=settings.feedback_log_path)
+        self.onboarding = OnboardingService(self.metrics)
+        self.weekly_summary_service = WeeklySummaryService(
+            graph_store=self.graph_store,
+            advice_service=self.advice,
+            feedback_service=self.feedback,
+        )
 
     def _build_graph_store(self) -> GraphStore:
         if self.settings.graph_backend.lower() == "neo4j":
@@ -142,6 +158,7 @@ class COSRuntime:
 
     def retrieve(self, request: RetrievalRequest) -> list[RetrievalResult]:
         with LatencyTimer(self.metrics, "retrieval_ms"):
+            self.metrics.inc("retrieval_queries")
             return self.retriever.retrieve(request.query, request.query_type, request.top_k)
 
     def temporal_query(self, request: TemporalQueryRequest) -> list[StatementNode]:
@@ -157,6 +174,7 @@ class COSRuntime:
             return self.advice.generate(request)
 
     def checkin(self, request: CheckinRequest) -> CheckinResponse:
+        self.metrics.inc("coach_checkins")
         ingestion = self.ingest_text(
             IngestionRequest(
                 text=request.reflection,
@@ -167,3 +185,24 @@ class COSRuntime:
         )
         advice = self.generate_advice(AdviceRequest(persona=request.persona, focus=request.focus))
         return CheckinResponse(ingestion=ingestion, advice=advice)
+
+    def submit_feedback(self, request: AdviceFeedbackRequest) -> AdviceFeedbackEvent:
+        with LatencyTimer(self.metrics, "feedback_ms"):
+            event = self.feedback.add(request)
+            self.metrics.inc("advice_feedback_total")
+            if request.rating.value == "useful":
+                self.metrics.inc("advice_feedback_useful")
+            else:
+                self.metrics.inc("advice_feedback_not_useful")
+            return event
+
+    def feedback_summary(self) -> AdviceFeedbackSummary:
+        return self.feedback.summary()
+
+    def onboarding_status(self) -> OnboardingStatus:
+        return self.onboarding.status()
+
+    def weekly_summary(self, request: WeeklySummaryRequest) -> WeeklySummaryResponse:
+        with LatencyTimer(self.metrics, "weekly_summary_ms"):
+            self.metrics.inc("weekly_summaries_generated")
+            return self.weekly_summary_service.generate(request)

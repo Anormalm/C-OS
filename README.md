@@ -58,6 +58,7 @@ At `http://127.0.0.1:8000/`:
 2. `Ask Memory`
 3. `What Was True On Date`
 4. `Coach Mode` for practical next-step advice
+5. `Onboarding Progress` and `Weekly Summary`
 
 ## API Highlights
 
@@ -67,7 +68,12 @@ At `http://127.0.0.1:8000/`:
 - `GET /insights/summary`
 - `POST /coach/advice`
 - `POST /coach/checkin`
+- `POST /coach/feedback`
+- `GET /coach/feedback/summary`
 - `GET /coach/personas`
+- `GET /onboarding/status`
+- `POST /onboarding/starter-pack`
+- `POST /summary/weekly`
 
 ## Evaluation And Benchmarks
 

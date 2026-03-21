@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from cos.core.models import AdviceRequest, CheckinRequest, IngestionRequest, RetrievalRequest, TemporalQueryRequest
+from cos.core.models import (
+    AdviceFeedbackRequest,
+    AdviceRequest,
+    CheckinRequest,
+    IngestionRequest,
+    RetrievalRequest,
+    TemporalQueryRequest,
+    WeeklySummaryRequest,
+)
 from cos.ingestion.async_queue import AsyncIngestionQueue
 from cos.runtime import COSRuntime
 
@@ -75,6 +83,44 @@ def create_router(runtime: COSRuntime, async_queue: AsyncIngestionQueue) -> APIR
     @router.post("/coach/checkin")
     def coach_checkin(request: CheckinRequest):
         return runtime.checkin(request)
+
+    @router.post("/coach/feedback")
+    def coach_feedback(request: AdviceFeedbackRequest):
+        return runtime.submit_feedback(request)
+
+    @router.get("/coach/feedback/summary")
+    def coach_feedback_summary():
+        return runtime.feedback_summary()
+
+    @router.get("/onboarding/status")
+    def onboarding_status():
+        return runtime.onboarding_status()
+
+    @router.post("/onboarding/starter-pack")
+    def onboarding_starter_pack():
+        starter_notes = [
+            "Project Atlas is active. Atlas requires clear milestones.",
+            "I struggle with consistency when tasks are too large.",
+            "Breaking work into one-day tasks improves execution.",
+            "I tend to pause projects when dependencies are unclear.",
+            "Weekly reflection helps me restart paused work faster.",
+        ]
+        ingested = []
+        for idx, note in enumerate(starter_notes):
+            ingested.append(
+                runtime.ingest_text(
+                    IngestionRequest(
+                        text=note,
+                        source_type="onboarding",
+                        source_uri=f"onboarding://starter-{idx}",
+                    )
+                ).model_dump(mode="json")
+            )
+        return {"ingested": len(ingested), "status": runtime.onboarding_status()}
+
+    @router.post("/summary/weekly")
+    def weekly_summary(request: WeeklySummaryRequest):
+        return runtime.weekly_summary(request)
 
     @router.get("/diagnostics/metrics")
     def metrics():

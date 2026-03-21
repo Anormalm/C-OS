@@ -37,3 +37,22 @@ def test_coach_advice_smoke():
     data = response.json()
     assert "advice" in data
     assert "caution" in data
+
+
+def test_sprint2_endpoints_smoke():
+    with TestClient(app) as client:
+        onboarding = client.get("/onboarding/status")
+        assert onboarding.status_code == 200
+
+        summary = client.post("/summary/weekly", json={"persona": "general", "days": 7})
+        assert summary.status_code == 200
+
+        feedback = client.post(
+            "/coach/feedback",
+            json={
+                "advice_title": "Test Advice",
+                "rating": "useful",
+                "persona": "general",
+            },
+        )
+        assert feedback.status_code == 200

@@ -43,6 +43,39 @@
 
       <section class="grid">
         <article class="panel">
+          <div class="panel-head">
+            <h2>Onboarding Progress</h2>
+            <button id="refreshOnboarding" class="ghost">Refresh</button>
+          </div>
+          <p class="meta">
+            New here? Use starter pack to preload example thinking patterns, then replace with your own notes.
+          </p>
+          <div class="actions">
+            <button id="loadStarterPack" type="button">Load Starter Pack</button>
+          </div>
+          <div id="onboardingResult" class="result-block"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h2>Weekly Summary</h2>
+            <button id="runWeeklySummary" class="ghost">Generate</button>
+          </div>
+          <label for="weeklyDays">Lookback window</label>
+          <select id="weeklyDays">
+            <option value="7" selected>Last 7 days</option>
+            <option value="14">Last 14 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+
+          <label for="weeklyFocus">Focus (optional)</label>
+          <input id="weeklyFocus" placeholder="consistency, project completion, study..." />
+          <div id="weeklyResult" class="result-block"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
           <h2>Save A Thought</h2>
           <form id="ingestForm">
             <label for="source">Where is this from?</label>

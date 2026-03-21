@@ -7,11 +7,17 @@ const temporalResult = document.getElementById("temporalResult");
 const insightResult = document.getElementById("insightResult");
 const coachResult = document.getElementById("coachResult");
 const personaResult = document.getElementById("personaResult");
+const onboardingResult = document.getElementById("onboardingResult");
+const weeklyResult = document.getElementById("weeklyResult");
 const loadSampleBtn = document.getElementById("loadSample");
 const refreshInsightsBtn = document.getElementById("refreshInsights");
 const coachAdviceBtn = document.getElementById("coachAdviceBtn");
 const coachCheckinBtn = document.getElementById("coachCheckinBtn");
 const refreshPersonasBtn = document.getElementById("refreshPersonas");
+const refreshOnboardingBtn = document.getElementById("refreshOnboarding");
+const loadStarterPackBtn = document.getElementById("loadStarterPack");
+const runWeeklySummaryBtn = document.getElementById("runWeeklySummary");
+let lastCoachContext = { persona: "general", focus: null };
 
 async function api(path, method = "GET", body = null) {
   const options = { method, headers: {} };
@@ -83,6 +89,7 @@ ingestForm.addEventListener("submit", async (event) => {
       `- Statements stored: ${result.statement_count}\n` +
       `- Contradictions tracked: ${result.contradictions}`;
     refreshInsights();
+    refreshOnboarding();
   } catch (error) {
     ingestResult.textContent = `Could not save thought: ${error.message}`;
   }
@@ -115,6 +122,7 @@ retrieveForm.addEventListener("submit", async (event) => {
       },
       "Nothing matched yet. Add more notes first."
     );
+    refreshOnboarding();
   } catch (error) {
     retrieveResult.innerHTML = `<p class="meta">Search failed: ${error.message}</p>`;
   }
@@ -184,12 +192,16 @@ function renderAdvice(adviceResponse, includeIngestion = null) {
   const cards = renderCards(
     rows,
     (item) => `
-      <article class="memory-card">
+      <article class="memory-card" data-advice-title="${escapeHtml(item.title)}">
         <p><strong>${escapeHtml(item.title)}</strong></p>
         <p>${escapeHtml(item.why)}</p>
         <p class="meta">Priority: ${escapeHtml(item.priority)} | Confidence: ${((item.confidence || 0) * 100).toFixed(0)}%</p>
         <p class="meta"><strong>Actions:</strong> ${item.actions.map(escapeHtml).join(" ")}</p>
         <p class="meta"><strong>Evidence:</strong> ${item.evidence.map(escapeHtml).join(" | ")}</p>
+        <div class="actions">
+          <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(item.title)}" type="button">Useful</button>
+          <button class="feedback-btn ghost" data-rating="not_useful" data-title="${escapeHtml(item.title)}" type="button">Not Useful</button>
+        </div>
       </article>
     `,
     "No advice generated yet."
@@ -216,7 +228,9 @@ function coachPayload() {
 coachAdviceBtn.addEventListener("click", async () => {
   setBusy(coachResult, "Generating advice...");
   try {
-    const result = await api("/coach/advice", "POST", coachPayload());
+    const payload = coachPayload();
+    lastCoachContext = payload;
+    const result = await api("/coach/advice", "POST", payload);
     coachResult.innerHTML = renderAdvice(result);
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Advice failed: ${escapeHtml(error.message)}</p>`;
@@ -231,9 +245,12 @@ coachCheckinBtn.addEventListener("click", async () => {
   }
   setBusy(coachResult, "Saving reflection and generating advice...");
   try {
-    const result = await api("/coach/checkin", "POST", { ...coachPayload(), reflection });
+    const payload = { ...coachPayload(), reflection };
+    lastCoachContext = payload;
+    const result = await api("/coach/checkin", "POST", payload);
     coachResult.innerHTML = renderAdvice(result.advice, result.ingestion);
     refreshInsights();
+    refreshOnboarding();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Check-in failed: ${escapeHtml(error.message)}</p>`;
   }
@@ -261,3 +278,110 @@ async function refreshPersonas() {
 
 refreshPersonasBtn.addEventListener("click", refreshPersonas);
 refreshPersonas();
+
+async function refreshOnboarding() {
+  setBusy(onboardingResult, "Loading onboarding progress...");
+  try {
+    const status = await api("/onboarding/status");
+    const percent = ((status.progress_ratio || 0) * 100).toFixed(0);
+    onboardingResult.innerHTML = `
+      <p><strong>Progress: ${percent}%</strong></p>
+      <p class="meta">${escapeHtml(status.recommended_next_step || "")}</p>
+      ${renderCards(
+        status.steps || [],
+        (step) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(step.title)}</strong></p>
+            <p class="meta">${step.completed}/${step.target} completed</p>
+            <p class="meta">${escapeHtml(step.helper)}</p>
+          </article>
+        `,
+        "No onboarding steps."
+      )}
+    `;
+  } catch (error) {
+    onboardingResult.innerHTML = `<p class="meta">Could not load onboarding: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+refreshOnboardingBtn.addEventListener("click", refreshOnboarding);
+loadStarterPackBtn.addEventListener("click", async () => {
+  setBusy(onboardingResult, "Loading starter pack...");
+  try {
+    const result = await api("/onboarding/starter-pack", "POST", {});
+    onboardingResult.innerHTML = `<p class="meta">Starter pack loaded (${result.ingested} notes).</p>`;
+    refreshOnboarding();
+    refreshInsights();
+  } catch (error) {
+    onboardingResult.innerHTML = `<p class="meta">Starter pack failed: ${escapeHtml(error.message)}</p>`;
+  }
+});
+
+function weeklyPayload() {
+  return {
+    persona: document.getElementById("persona").value,
+    focus: document.getElementById("weeklyFocus").value || null,
+    days: Number(document.getElementById("weeklyDays").value || "7")
+  };
+}
+
+async function runWeeklySummary() {
+  setBusy(weeklyResult, "Generating weekly summary...");
+  try {
+    const result = await api("/summary/weekly", "POST", weeklyPayload());
+    weeklyResult.innerHTML = `
+      <div class="card-list">
+        <article class="memory-card">
+          <p><strong>Highlights</strong></p>
+          <p class="meta">${(result.highlights || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Wins</strong></p>
+          <p class="meta">${(result.wins || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Risks</strong></p>
+          <p class="meta">${(result.risks || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Next Actions</strong></p>
+          <p class="meta">${(result.recommended_next_actions || []).map(escapeHtml).join("<br>")}</p>
+        </article>
+      </div>
+    `;
+  } catch (error) {
+    weeklyResult.innerHTML = `<p class="meta">Weekly summary failed: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+runWeeklySummaryBtn.addEventListener("click", runWeeklySummary);
+
+coachResult.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  if (!target.classList.contains("feedback-btn")) {
+    return;
+  }
+  const title = target.dataset.title || "";
+  const rating = target.dataset.rating || "";
+  if (!title || !rating) {
+    return;
+  }
+  target.textContent = "Saving...";
+  target.setAttribute("disabled", "true");
+  try {
+    await api("/coach/feedback", "POST", {
+      advice_title: title,
+      rating,
+      persona: lastCoachContext.persona || "general",
+      context_focus: lastCoachContext.focus || null
+    });
+    target.textContent = rating === "useful" ? "Saved Useful" : "Saved Not Useful";
+  } catch (error) {
+    target.textContent = "Retry";
+  }
+});
+
+refreshOnboarding();

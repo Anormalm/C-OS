@@ -169,3 +169,71 @@ class CheckinRequest(BaseModel):
 class CheckinResponse(BaseModel):
     ingestion: IngestionResponse
     advice: AdviceResponse
+
+
+class FeedbackRating(str, Enum):
+    useful = "useful"
+    not_useful = "not_useful"
+
+
+class AdviceFeedbackRequest(BaseModel):
+    advice_title: str = Field(min_length=1)
+    rating: FeedbackRating
+    persona: UserPersona = UserPersona.general
+    note: str | None = None
+    context_focus: str | None = None
+
+
+class AdviceFeedbackEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    created_at: datetime = Field(default_factory=utc_now)
+    advice_title: str
+    rating: FeedbackRating
+    persona: UserPersona
+    note: str | None = None
+    context_focus: str | None = None
+
+
+class AdviceFeedbackSummary(BaseModel):
+    total: int
+    useful: int
+    not_useful: int
+    useful_rate: float
+    top_liked_advice: list[dict[str, Any]]
+    top_disliked_advice: list[dict[str, Any]]
+
+
+class OnboardingStep(BaseModel):
+    id: str
+    title: str
+    target: int
+    completed: int
+    done: bool
+    helper: str
+
+
+class OnboardingStatus(BaseModel):
+    started: bool
+    completed: bool
+    progress_ratio: float
+    steps: list[OnboardingStep]
+    recommended_next_step: str
+
+
+class WeeklySummaryRequest(BaseModel):
+    persona: UserPersona = UserPersona.general
+    days: int = Field(default=7, ge=3, le=30)
+    focus: str | None = None
+
+
+class WeeklySummaryResponse(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    period_start: datetime
+    period_end: datetime
+    persona: UserPersona
+    focus: str | None = None
+    highlights: list[str]
+    risks: list[str]
+    wins: list[str]
+    recommended_next_actions: list[str]
+    stats: dict[str, Any]
