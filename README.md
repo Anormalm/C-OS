@@ -1,77 +1,95 @@
 # COGNITIVE OS (C-OS)
 
-C-OS is a persistent, evolving cognitive memory system designed to model:
+C-OS is a persistent cognitive memory system that tracks how ideas evolve over time.
+
+It is built to model:
 - ideas
 - knowledge
 - time
 - contradictions
 - evolution of thought
 
-This repository provides a production-ready foundation with:
-- modular pipeline layers (`ingestion`, `extraction`, `graph`, `vector`, `resolution`, `temporal`, `inference`, `ui`)
-- reified, bi-temporal graph schema
-- hybrid retrieval (vector + graph + dynamic re-ranking)
-- contradiction-aware versioning (never delete conflicting facts)
-- API surface for ingestion, temporal queries, retrieval, and analytics
+## What It Provides
 
-## Architecture
+- Temporal reified graph memory (`valid_from`, `valid_to`, `ingestion_time`).
+- Hybrid retrieval (vector candidates + graph context + dynamic re-ranking).
+- Contradiction-aware versioning (conflicts are tracked, not deleted).
+- Non-technical web UI with memory query and coach guidance.
+- API-first architecture for integration into other products.
 
-```
-Input -> Ingestion -> Extraction -> Resolution -> Graph/Vector Memory
-      -> Temporal Reasoning -> Inference -> API/UI
-```
+## 5-Minute Quickstart
 
-Core data model:
-- `EntityNode`
-- `StatementNode` (reified facts with `valid_from`, `valid_to`, `ingestion_time`, `confidence`, `source`)
-
-## Quick Start
-
-1. Install:
+### Local
 
 ```bash
 pip install -e ".[dev]"
-```
-
-2. Run API:
-
-```bash
 uvicorn cos.app:app --reload
 ```
 
-3. Open docs:
-- http://127.0.0.1:8000/docs
-- Non-technical workspace: http://127.0.0.1:8000/
+Open:
+- UI workspace: `http://127.0.0.1:8000/`
+- API docs: `http://127.0.0.1:8000/docs`
 
-## Non-Technical Usage
+### Docker
 
-Open `http://127.0.0.1:8000/` and use:
-- `Save A Thought`: paste notes in plain language
-- `Ask Memory`: ask natural-language questions
-- `What Was True On Date`: query memory at a specific time
-- `Insight Panel`: see recurring themes and abandoned ideas
-- `Coach Mode`: receive concrete next steps with priorities and evidence
+```bash
+docker compose up --build
+```
+
+Open:
+- UI workspace: `http://127.0.0.1:8000/`
+- Neo4j browser: `http://127.0.0.1:7474/`
+
+More setup detail: [QUICKSTART.md](docs/QUICKSTART.md)
+
+## Architecture
+
+See full diagram and layer breakdown in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+Core model:
+- `EntityNode`
+- `StatementNode` (reified fact with provenance/confidence and bi-temporal fields)
+
+## Non-Technical User Flow
+
+At `http://127.0.0.1:8000/`:
+
+1. `Save A Thought`
+2. `Ask Memory`
+3. `What Was True On Date`
+4. `Coach Mode` for practical next-step advice
 
 ## API Highlights
 
-- `POST /ingest/text` ingest raw text with metadata
-- `POST /query/retrieve` hybrid retrieval
-- `POST /query/temporal` truth-at-time query
-- `GET /insights/summary` cognitive analytics
-- `POST /coach/advice` actionable personalized guidance from memory patterns
-- `POST /coach/checkin` save reflection + return practical advice
-- `GET /coach/personas` persona templates (student/founder/manager/creator/general)
-- `GET /graph/entity/{entity_id}` local graph neighborhood
+- `POST /ingest/text`
+- `POST /query/retrieve`
+- `POST /query/temporal`
+- `GET /insights/summary`
+- `POST /coach/advice`
+- `POST /coach/checkin`
+- `GET /coach/personas`
 
-## Storage
+## Evaluation And Benchmarks
 
-Default runtime adapters:
-- graph: in-memory (swap-ready for Neo4j)
-- vector: in-memory (swap-ready for FAISS)
+Benchmark notes: [EVALUATION.md](docs/EVALUATION.md)
 
-Production deployment should wire persistent adapters through environment settings.
+Run retrieval benchmark:
 
-## Repo Layout
+```bash
+python -m cos.experiments.benchmark_retrieval
+```
+
+## Publishability Checklist Included
+
+- MIT license
+- security policy
+- contributing guide
+- code of conduct
+- changelog
+- CI (`ruff`, unit tests, API smoke tests)
+- Dockerfile + docker-compose
+
+## Repository Layout
 
 ```
 /cos
@@ -86,9 +104,3 @@ Production deployment should wire persistent adapters through environment settin
   /configs
   /experiments
 ```
-
-## Notes
-
-- Contradictions are preserved as versioned statements.
-- Temporal reasoning is bi-temporal: valid time + ingestion time.
-- Retrieval avoids pure cosine by combining vector score, graph context, and temporal relevance.
