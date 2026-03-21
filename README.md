@@ -47,6 +47,12 @@ Open:
 
 Detailed setup: [QUICKSTART.md](docs/QUICKSTART.md)
 
+One-command smoke test:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/local_smoke_test.ps1
+```
+
 ## Demo Package
 
 - Demo guide: [DEMO.md](docs/DEMO.md)

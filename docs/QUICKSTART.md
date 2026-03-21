@@ -32,3 +32,14 @@
    - `python -m cos.experiments.load_sample_dataset`
 2. Open quality dashboard in UI.
 3. Run evaluation harness with Hit@3.
+
+## One-Command Local Smoke Test
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/local_smoke_test.ps1
+```
+
+Optional flags:
+- `-SkipInstall`
+- `-SkipLint`
+- `-SkipTests`
