@@ -71,12 +71,11 @@ python -m cos.experiments.load_sample_dataset
 
 ## Core UX Flow
 
-1. Onboarding Progress
-2. Save A Thought
-3. Ask Memory
-4. Coach Mode + feedback
-5. Weekly Summary
-6. Quality Dashboard + Evaluation Harness
+1. Add Thought
+2. Ask Memory
+3. Get My Next Step
+
+Advanced tools (timeline, quality, evaluation, templates) are available under the `Advanced Tools` drawer.
 
 ## API Highlights
 

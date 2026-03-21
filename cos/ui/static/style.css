@@ -123,6 +123,24 @@ h1 {
   margin-top: 16px;
 }
 
+.primary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.wizard {
+  margin-top: 16px;
+}
+
+.wizard-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
 label {
   display: block;
   margin: 14px 0 6px;
@@ -221,6 +239,29 @@ button.ghost {
   align-items: center;
 }
 
+.advanced-panel {
+  margin-top: 16px;
+}
+
+.advanced-panel summary {
+  list-style: none;
+  cursor: pointer;
+  background: #fff3e5;
+  color: var(--accent-2);
+  border: 1px solid #efc79e;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.advanced-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-panel[open] summary {
+  margin-bottom: 12px;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -234,7 +275,9 @@ button.ghost {
 
 @media (max-width: 940px) {
   .steps,
-  .grid {
+  .grid,
+  .primary-grid,
+  .wizard-buttons {
     grid-template-columns: 1fr;
   }
 

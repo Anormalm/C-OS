@@ -1,26 +1,38 @@
 const ingestForm = document.getElementById("ingestForm");
 const retrieveForm = document.getElementById("retrieveForm");
 const temporalForm = document.getElementById("temporalForm");
+
 const ingestResult = document.getElementById("ingestResult");
 const retrieveResult = document.getElementById("retrieveResult");
 const temporalResult = document.getElementById("temporalResult");
-const insightResult = document.getElementById("insightResult");
 const coachResult = document.getElementById("coachResult");
-const personaResult = document.getElementById("personaResult");
+const wizardResult = document.getElementById("wizardResult");
+const todayResult = document.getElementById("todayResult");
 const onboardingResult = document.getElementById("onboardingResult");
 const weeklyResult = document.getElementById("weeklyResult");
 const qualityResult = document.getElementById("qualityResult");
 const evaluationResult = document.getElementById("evaluationResult");
+const insightResult = document.getElementById("insightResult");
+const personaResult = document.getElementById("personaResult");
+
 const loadSampleBtn = document.getElementById("loadSample");
-const refreshInsightsBtn = document.getElementById("refreshInsights");
 const coachAdviceBtn = document.getElementById("coachAdviceBtn");
 const coachCheckinBtn = document.getElementById("coachCheckinBtn");
-const refreshPersonasBtn = document.getElementById("refreshPersonas");
+
+const refreshTodayBtn = document.getElementById("refreshToday");
 const refreshOnboardingBtn = document.getElementById("refreshOnboarding");
 const loadStarterPackBtn = document.getElementById("loadStarterPack");
 const runWeeklySummaryBtn = document.getElementById("runWeeklySummary");
+const runTemporalQueryBtn = document.getElementById("runTemporalQuery");
 const refreshQualityBtn = document.getElementById("refreshQuality");
 const runEvaluationBtn = document.getElementById("runEvaluation");
+const refreshInsightsBtn = document.getElementById("refreshInsights");
+const refreshPersonasBtn = document.getElementById("refreshPersonas");
+
+const wizardLoadStarterBtn = document.getElementById("wizardLoadStarter");
+const wizardAskFirstBtn = document.getElementById("wizardAskFirst");
+const wizardAdviceFirstBtn = document.getElementById("wizardAdviceFirst");
+
 let lastCoachContext = { persona: "general", focus: null };
 
 async function api(path, method = "GET", body = null) {
@@ -38,7 +50,7 @@ async function api(path, method = "GET", body = null) {
 }
 
 function setBusy(target, text) {
-  target.innerHTML = `<p class="meta">${text}</p>`;
+  target.innerHTML = `<p class="meta">${escapeHtml(text)}</p>`;
 }
 
 function timestampFromLocal(value) {
@@ -46,13 +58,6 @@ function timestampFromLocal(value) {
     return null;
   }
   return new Date(value).toISOString();
-}
-
-function renderCards(rows, rowRenderer, emptyText = "No results yet.") {
-  if (!rows || rows.length === 0) {
-    return `<p class="meta">${emptyText}</p>`;
-  }
-  return `<div class="card-list">${rows.map(rowRenderer).join("")}</div>`;
 }
 
 function escapeHtml(value) {
@@ -64,8 +69,68 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function renderCards(rows, rowRenderer, emptyText = "No results yet.") {
+  if (!rows || rows.length === 0) {
+    return `<p class="meta">${escapeHtml(emptyText)}</p>`;
+  }
+  return `<div class="card-list">${rows.map(rowRenderer).join("")}</div>`;
+}
+
+function coachPayload() {
+  return {
+    persona: document.getElementById("persona").value,
+    focus: document.getElementById("focusArea").value || null
+  };
+}
+
+function renderAdvice(adviceResponse, includeIngestion = null) {
+  const rows = adviceResponse.advice || [];
+  if (!rows.length) {
+    return `<p class="meta">No advice generated yet.</p>`;
+  }
+
+  const primary = rows[0];
+  const nextAction = primary.actions && primary.actions.length ? primary.actions[0] : "No action suggested.";
+  const additional = rows.slice(1);
+  const additionalHtml = additional.length
+    ? `<details><summary>Show more suggestions</summary>${renderCards(
+        additional,
+        (item) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(item.title)}</strong></p>
+            <p class="meta">${escapeHtml(item.why)}</p>
+          </article>
+        `
+      )}</details>`
+    : "";
+
+  const ingestHeader = includeIngestion
+    ? `<p class="meta">Reflection saved (${includeIngestion.statement_count} statements).</p>`
+    : "";
+
+  return `
+    ${ingestHeader}
+    <article class="memory-card" data-advice-title="${escapeHtml(primary.title)}">
+      <p><strong>${escapeHtml(primary.title)}</strong></p>
+      <p>${escapeHtml(primary.why)}</p>
+      <p><strong>Next action:</strong> ${escapeHtml(nextAction)}</p>
+      <div class="actions">
+        <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(primary.title)}" data-note="done" type="button">Done</button>
+        <button class="feedback-btn ghost" data-rating="not_useful" data-title="${escapeHtml(primary.title)}" type="button">Not Useful</button>
+      </div>
+      <details>
+        <summary>Why this recommendation</summary>
+        <p class="meta">Priority: ${escapeHtml(primary.priority)} | Confidence: ${((primary.confidence || 0) * 100).toFixed(0)}%</p>
+        <p class="meta"><strong>Evidence:</strong> ${(primary.evidence || []).map(escapeHtml).join(" | ")}</p>
+      </details>
+    </article>
+    ${additionalHtml}
+    <p class="meta">${escapeHtml(adviceResponse.caution || "")}</p>
+  `;
+}
+
 loadSampleBtn.addEventListener("click", () => {
-  document.getElementById("source").value = "personal-notes";
+  document.getElementById("source").value = "journal";
   document.getElementById("noteText").value = [
     "2025-01-02 Atlas is active.",
     "Atlas uses Neo4j.",
@@ -76,40 +141,33 @@ loadSampleBtn.addEventListener("click", () => {
 
 ingestForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  ingestResult.textContent = "Saving thought into memory...";
+  ingestResult.textContent = "Saving...";
   try {
     const payload = {
       text: document.getElementById("noteText").value,
       source_type: "note",
       source_uri: document.getElementById("source").value || "web-ui://manual-entry",
       valid_from: timestampFromLocal(document.getElementById("validFrom").value),
-      metadata: { ui: "non-technical-workspace" }
+      metadata: { ui: "simplified-workspace" }
     };
     const result = await api("/ingest/text", "POST", payload);
-    ingestResult.textContent =
-      `Saved.\n` +
-      `- Chunks processed: ${result.chunk_count}\n` +
-      `- Facts extracted: ${result.triple_count}\n` +
-      `- Statements stored: ${result.statement_count}\n` +
-      `- Contradictions tracked: ${result.contradictions}`;
-    refreshInsights();
-    refreshOnboarding();
-    refreshQuality();
+    ingestResult.textContent = `Saved ${result.statement_count} statements.`;
+    await refreshToday();
   } catch (error) {
-    ingestResult.textContent = `Could not save thought: ${error.message}`;
+    ingestResult.textContent = `Save failed: ${error.message}`;
   }
 });
 
 retrieveForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  setBusy(retrieveResult, "Searching memory...");
+  await runSearch();
+});
+
+async function runSearch(queryOverride = null) {
+  setBusy(retrieveResult, "Searching...");
   try {
-    const payload = {
-      query: document.getElementById("question").value,
-      query_type: document.getElementById("mode").value,
-      top_k: 7
-    };
-    const rows = await api("/query/retrieve", "POST", payload);
+    const query = queryOverride || document.getElementById("question").value;
+    const rows = await api("/query/retrieve", "POST", { query, query_type: "exploratory", top_k: 5 });
     retrieveResult.innerHTML = renderCards(
       rows,
       (row) => {
@@ -120,174 +178,123 @@ retrieveForm.addEventListener("submit", async (event) => {
             : p.name || "Memory item";
         return `
           <article class="memory-card">
-            <p><strong>${line}</strong></p>
-            <p class="meta">Score: ${(row.score || 0).toFixed(3)} | ${row.explanation || ""}</p>
+            <p><strong>${escapeHtml(line)}</strong></p>
+            <p class="meta">${escapeHtml(row.explanation || "")}</p>
           </article>
         `;
       },
-      "Nothing matched yet. Add more notes first."
+      "No memory found yet."
     );
-    refreshOnboarding();
-    refreshQuality();
+    await refreshToday();
   } catch (error) {
-    retrieveResult.innerHTML = `<p class="meta">Search failed: ${error.message}</p>`;
+    retrieveResult.innerHTML = `<p class="meta">Search failed: ${escapeHtml(error.message)}</p>`;
   }
-});
-
-temporalForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setBusy(temporalResult, "Checking timeline...");
-  try {
-    const payload = {
-      at_time: timestampFromLocal(document.getElementById("atDate").value),
-      entity: document.getElementById("entity").value || null
-    };
-    const rows = await api("/query/temporal", "POST", payload);
-    temporalResult.innerHTML = renderCards(
-      rows,
-      (row) => `
-        <article class="memory-card">
-          <p><strong>${row.subject_label || row.subject} ${row.relation} ${row.object_label || row.object}</strong></p>
-          <p class="meta">Valid from: ${new Date(row.valid_from).toLocaleString()}</p>
-          <p class="meta">Source: ${row.source}</p>
-        </article>
-      `,
-      "No facts were active at that time."
-    );
-  } catch (error) {
-    temporalResult.innerHTML = `<p class="meta">Timeline check failed: ${error.message}</p>`;
-  }
-});
-
-async function refreshInsights() {
-  setBusy(insightResult, "Refreshing insights...");
-  try {
-    const result = await api("/insights/summary");
-    const recurring = (result.recurring_topics || []).slice(0, 5);
-    const abandoned = (result.abandoned_topics || []).slice(0, 5);
-    insightResult.innerHTML = `
-      <div class="card-list">
-        <article class="memory-card">
-          <p><strong>Contradiction Rate</strong></p>
-          <p>${((result.contradiction_rate || 0) * 100).toFixed(1)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Deduplication Rate</strong></p>
-          <p>${((result.deduplication_rate || 0) * 100).toFixed(1)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Recurring Topics</strong></p>
-          <p class="meta">${recurring.map((r) => r.label).join(", ") || "None yet"}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Abandoned Topics</strong></p>
-          <p class="meta">${abandoned.map((r) => r.label).join(", ") || "None yet"}</p>
-        </article>
-      </div>
-    `;
-  } catch (error) {
-    insightResult.innerHTML = `<p class="meta">Insight refresh failed: ${error.message}</p>`;
-  }
-}
-
-refreshInsightsBtn.addEventListener("click", refreshInsights);
-refreshInsights();
-
-function renderAdvice(adviceResponse, includeIngestion = null) {
-  const rows = adviceResponse.advice || [];
-  const cards = renderCards(
-    rows,
-    (item) => `
-      <article class="memory-card" data-advice-title="${escapeHtml(item.title)}">
-        <p><strong>${escapeHtml(item.title)}</strong></p>
-        <p>${escapeHtml(item.why)}</p>
-        <p class="meta">Priority: ${escapeHtml(item.priority)} | Confidence: ${((item.confidence || 0) * 100).toFixed(0)}%</p>
-        <p class="meta"><strong>Actions:</strong> ${item.actions.map(escapeHtml).join(" ")}</p>
-        <p class="meta"><strong>Evidence:</strong> ${item.evidence.map(escapeHtml).join(" | ")}</p>
-        <div class="actions">
-          <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(item.title)}" type="button">Useful</button>
-          <button class="feedback-btn ghost" data-rating="not_useful" data-title="${escapeHtml(item.title)}" type="button">Not Useful</button>
-        </div>
-      </article>
-    `,
-    "No advice generated yet."
-  );
-
-  const ingestHeader = includeIngestion
-    ? `<p class="meta">Reflection saved: ${includeIngestion.statement_count} statements, ${includeIngestion.contradictions} contradictions tracked.</p>`
-    : "";
-
-  return `
-    ${ingestHeader}
-    ${cards}
-    <p class="meta">${escapeHtml(adviceResponse.caution || "")}</p>
-  `;
-}
-
-function coachPayload() {
-  return {
-    persona: document.getElementById("persona").value,
-    focus: document.getElementById("focusArea").value || null
-  };
 }
 
 coachAdviceBtn.addEventListener("click", async () => {
-  setBusy(coachResult, "Generating advice...");
+  setBusy(coachResult, "Generating next step...");
   try {
     const payload = coachPayload();
     lastCoachContext = payload;
     const result = await api("/coach/advice", "POST", payload);
     coachResult.innerHTML = renderAdvice(result);
+    await refreshToday();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Advice failed: ${escapeHtml(error.message)}</p>`;
   }
 });
 
 coachCheckinBtn.addEventListener("click", async () => {
+  setBusy(coachResult, "Saving reflection and generating advice...");
   const reflection = document.getElementById("reflection").value.trim();
   if (!reflection) {
-    coachResult.innerHTML = `<p class="meta">Add a short reflection first, then click again.</p>`;
+    coachResult.innerHTML = `<p class="meta">Add a reflection first.</p>`;
     return;
   }
-  setBusy(coachResult, "Saving reflection and generating advice...");
   try {
     const payload = { ...coachPayload(), reflection };
     lastCoachContext = payload;
     const result = await api("/coach/checkin", "POST", payload);
     coachResult.innerHTML = renderAdvice(result.advice, result.ingestion);
-    refreshInsights();
-    refreshOnboarding();
-    refreshQuality();
+    await refreshToday();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Check-in failed: ${escapeHtml(error.message)}</p>`;
   }
 });
 
-async function refreshPersonas() {
-  setBusy(personaResult, "Loading templates...");
+coachResult.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || !target.classList.contains("feedback-btn")) {
+    return;
+  }
+  const title = target.dataset.title || "";
+  const rating = target.dataset.rating || "";
+  const note = target.dataset.note || null;
+  if (!title || !rating) {
+    return;
+  }
+  target.textContent = "Saving...";
+  target.setAttribute("disabled", "true");
   try {
-    const personas = await api("/coach/personas");
-    personaResult.innerHTML = renderCards(
-      personas,
-      (item) => `
-        <article class="memory-card">
-          <p><strong>${escapeHtml(item.persona)}</strong></p>
-          <p class="meta">Cadence: ${escapeHtml(item.cadence)}</p>
-          <p class="meta">${escapeHtml(item.framing)}</p>
-        </article>
-      `,
-      "No templates found."
-    );
+    await api("/coach/feedback", "POST", {
+      advice_title: title,
+      rating,
+      persona: lastCoachContext.persona || "general",
+      context_focus: lastCoachContext.focus || null,
+      note
+    });
+    target.textContent = rating === "useful" ? "Saved as Done" : "Saved";
+    await refreshToday();
   } catch (error) {
-    personaResult.innerHTML = `<p class="meta">Could not load templates: ${escapeHtml(error.message)}</p>`;
+    target.textContent = "Retry";
+    target.removeAttribute("disabled");
+  }
+});
+
+async function refreshToday() {
+  setBusy(todayResult, "Loading your day...");
+  try {
+    const [onboarding, weekly, advice] = await Promise.all([
+      api("/onboarding/status"),
+      api("/summary/weekly", "POST", { persona: "general", days: 7 }),
+      api("/coach/advice", "POST", { persona: "general" })
+    ]);
+
+    const reminder = onboarding.recommended_next_step || "Keep writing your thoughts.";
+    const nextAction =
+      advice.advice && advice.advice.length && advice.advice[0].actions.length
+        ? advice.advice[0].actions[0]
+        : "Generate advice to get a concrete action.";
+    const weeklySnippet =
+      weekly.highlights && weekly.highlights.length
+        ? weekly.highlights[0]
+        : "No weekly highlight yet.";
+    const progress = ((onboarding.progress_ratio || 0) * 100).toFixed(0);
+
+    todayResult.innerHTML = `
+      <div class="card-list">
+        <article class="memory-card">
+          <p><strong>Reminder</strong></p>
+          <p>${escapeHtml(reminder)}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>Next Step</strong></p>
+          <p>${escapeHtml(nextAction)}</p>
+        </article>
+        <article class="memory-card">
+          <p><strong>This Week</strong></p>
+          <p>${escapeHtml(weeklySnippet)}</p>
+          <p class="meta">Onboarding progress: ${progress}%</p>
+        </article>
+      </div>
+    `;
+  } catch (error) {
+    todayResult.innerHTML = `<p class="meta">Could not load Today card: ${escapeHtml(error.message)}</p>`;
   }
 }
 
-refreshPersonasBtn.addEventListener("click", refreshPersonas);
-refreshPersonas();
-
 async function refreshOnboarding() {
-  setBusy(onboardingResult, "Loading onboarding progress...");
+  setBusy(onboardingResult, "Loading...");
   try {
     const status = await api("/onboarding/status");
     const percent = ((status.progress_ratio || 0) * 100).toFixed(0);
@@ -299,28 +306,71 @@ async function refreshOnboarding() {
         (step) => `
           <article class="memory-card">
             <p><strong>${escapeHtml(step.title)}</strong></p>
-            <p class="meta">${step.completed}/${step.target} completed</p>
-            <p class="meta">${escapeHtml(step.helper)}</p>
+            <p class="meta">${step.completed}/${step.target}</p>
           </article>
-        `,
-        "No onboarding steps."
+        `
       )}
     `;
   } catch (error) {
-    onboardingResult.innerHTML = `<p class="meta">Could not load onboarding: ${escapeHtml(error.message)}</p>`;
+    onboardingResult.innerHTML = `<p class="meta">Load failed: ${escapeHtml(error.message)}</p>`;
   }
 }
 
-refreshOnboardingBtn.addEventListener("click", refreshOnboarding);
-loadStarterPackBtn.addEventListener("click", async () => {
-  setBusy(onboardingResult, "Loading starter pack...");
+async function loadStarterPack() {
+  setBusy(wizardResult, "Loading starter data...");
   try {
     const result = await api("/onboarding/starter-pack", "POST", {});
-    onboardingResult.innerHTML = `<p class="meta">Starter pack loaded (${result.ingested} notes).</p>`;
-    refreshOnboarding();
-    refreshInsights();
+    wizardResult.innerHTML = `<p class="meta">Starter data loaded (${result.ingested} notes).</p>`;
+    await refreshToday();
+    await refreshOnboarding();
   } catch (error) {
-    onboardingResult.innerHTML = `<p class="meta">Starter pack failed: ${escapeHtml(error.message)}</p>`;
+    wizardResult.innerHTML = `<p class="meta">Starter load failed: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+loadStarterPackBtn.addEventListener("click", loadStarterPack);
+wizardLoadStarterBtn.addEventListener("click", loadStarterPack);
+
+wizardAskFirstBtn.addEventListener("click", async () => {
+  document.getElementById("question").value = "What does Atlas use?";
+  await runSearch("What does Atlas use?");
+  wizardResult.innerHTML = `<p class="meta">First question complete.</p>`;
+});
+
+wizardAdviceFirstBtn.addEventListener("click", async () => {
+  setBusy(wizardResult, "Generating first advice...");
+  try {
+    const result = await api("/coach/advice", "POST", { persona: "general" });
+    coachResult.innerHTML = renderAdvice(result);
+    wizardResult.innerHTML = `<p class="meta">First advice generated.</p>`;
+    await refreshToday();
+  } catch (error) {
+    wizardResult.innerHTML = `<p class="meta">Advice failed: ${escapeHtml(error.message)}</p>`;
+  }
+});
+
+refreshTodayBtn.addEventListener("click", refreshToday);
+refreshOnboardingBtn.addEventListener("click", refreshOnboarding);
+
+runTemporalQueryBtn.addEventListener("click", async () => {
+  setBusy(temporalResult, "Running...");
+  try {
+    const rows = await api("/query/temporal", "POST", {
+      at_time: timestampFromLocal(document.getElementById("atDate").value),
+      entity: document.getElementById("entity").value || null
+    });
+    temporalResult.innerHTML = renderCards(
+      rows,
+      (row) => `
+        <article class="memory-card">
+          <p><strong>${escapeHtml(row.subject_label || row.subject)} ${escapeHtml(row.relation)} ${escapeHtml(row.object_label || row.object)}</strong></p>
+          <p class="meta">${new Date(row.valid_from).toLocaleString()}</p>
+        </article>
+      `,
+      "No timeline results."
+    );
+  } catch (error) {
+    temporalResult.innerHTML = `<p class="meta">Timeline failed: ${escapeHtml(error.message)}</p>`;
   }
 });
 
@@ -332,132 +382,127 @@ function weeklyPayload() {
   };
 }
 
-async function runWeeklySummary() {
-  setBusy(weeklyResult, "Generating weekly summary...");
+runWeeklySummaryBtn.addEventListener("click", async () => {
+  setBusy(weeklyResult, "Generating...");
   try {
     const result = await api("/summary/weekly", "POST", weeklyPayload());
     weeklyResult.innerHTML = `
-      <div class="card-list">
-        <article class="memory-card">
-          <p><strong>Highlights</strong></p>
-          <p class="meta">${(result.highlights || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Wins</strong></p>
-          <p class="meta">${(result.wins || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Risks</strong></p>
-          <p class="meta">${(result.risks || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Next Actions</strong></p>
-          <p class="meta">${(result.recommended_next_actions || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-      </div>
+      ${renderCards(
+        [
+          { title: "Highlights", items: result.highlights || [] },
+          { title: "Wins", items: result.wins || [] },
+          { title: "Risks", items: result.risks || [] }
+        ],
+        (section) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(section.title)}</strong></p>
+            <p class="meta">${section.items.map(escapeHtml).join("<br>")}</p>
+          </article>
+        `
+      )}
     `;
   } catch (error) {
     weeklyResult.innerHTML = `<p class="meta">Weekly summary failed: ${escapeHtml(error.message)}</p>`;
   }
-}
-
-runWeeklySummaryBtn.addEventListener("click", runWeeklySummary);
+});
 
 async function refreshQuality() {
-  setBusy(qualityResult, "Loading quality dashboard...");
+  setBusy(qualityResult, "Loading...");
   try {
     const result = await api("/quality/dashboard");
     qualityResult.innerHTML = `
-      <div class="card-list">
-        <article class="memory-card">
-          <p><strong>Onboarding Progress</strong></p>
-          <p>${((result.onboarding_progress || 0) * 100).toFixed(0)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Advice Useful Rate</strong></p>
-          <p>${((result.advice_useful_rate || 0) * 100).toFixed(1)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Retrieval Queries</strong></p>
-          <p>${result.retrieval_queries || 0}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Avg Retrieval Latency</strong></p>
-          <p>${((result.latency_ms_avg || {}).retrieval_ms || 0).toFixed(1)} ms</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Quality Recommendations</strong></p>
-          <p class="meta">${(result.recommendations || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-      </div>
+      ${renderCards(
+        [
+          ["Onboarding", `${((result.onboarding_progress || 0) * 100).toFixed(0)}%`],
+          ["Advice useful", `${((result.advice_useful_rate || 0) * 100).toFixed(1)}%`],
+          ["Retrieval queries", `${result.retrieval_queries || 0}`],
+          ["Avg retrieval latency", `${((result.latency_ms_avg || {}).retrieval_ms || 0).toFixed(1)} ms`]
+        ],
+        (row) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(row[0])}</strong></p>
+            <p>${escapeHtml(row[1])}</p>
+          </article>
+        `
+      )}
+      <p class="meta">${(result.recommendations || []).map(escapeHtml).join("<br>")}</p>
     `;
   } catch (error) {
-    qualityResult.innerHTML = `<p class="meta">Dashboard failed: ${escapeHtml(error.message)}</p>`;
+    qualityResult.innerHTML = `<p class="meta">Quality load failed: ${escapeHtml(error.message)}</p>`;
   }
 }
 
-async function runEvaluation() {
+refreshQualityBtn.addEventListener("click", refreshQuality);
+
+runEvaluationBtn.addEventListener("click", async () => {
   setBusy(evaluationResult, "Running benchmark...");
   try {
     const topK = Number(document.getElementById("evaluationTopK").value || "3");
     const result = await api("/evaluation/run", "POST", { top_k: topK, dataset: "default" });
     evaluationResult.innerHTML = `
-      <div class="card-list">
-        <article class="memory-card">
-          <p><strong>Hybrid Hit@${result.top_k}</strong></p>
-          <p>${((result.hybrid_hit_at_k || 0) * 100).toFixed(1)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Vector Hit@${result.top_k}</strong></p>
-          <p>${((result.vector_hit_at_k || 0) * 100).toFixed(1)}%</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Gain</strong></p>
-          <p>${(result.gain_over_vector || 0).toFixed(3)}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>Notes</strong></p>
-          <p class="meta">${(result.notes || []).map(escapeHtml).join("<br>")}</p>
-        </article>
-      </div>
+      ${renderCards(
+        [
+          ["Hybrid Hit@" + result.top_k, `${((result.hybrid_hit_at_k || 0) * 100).toFixed(1)}%`],
+          ["Vector Hit@" + result.top_k, `${((result.vector_hit_at_k || 0) * 100).toFixed(1)}%`],
+          ["Gain", `${(result.gain_over_vector || 0).toFixed(3)}`]
+        ],
+        (row) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(row[0])}</strong></p>
+            <p>${escapeHtml(row[1])}</p>
+          </article>
+        `
+      )}
+      <p class="meta">${(result.notes || []).map(escapeHtml).join("<br>")}</p>
     `;
-    refreshQuality();
+    await refreshQuality();
   } catch (error) {
     evaluationResult.innerHTML = `<p class="meta">Benchmark failed: ${escapeHtml(error.message)}</p>`;
   }
-}
+});
 
-refreshQualityBtn.addEventListener("click", refreshQuality);
-runEvaluationBtn.addEventListener("click", runEvaluation);
-
-coachResult.addEventListener("click", async (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-  if (!target.classList.contains("feedback-btn")) {
-    return;
-  }
-  const title = target.dataset.title || "";
-  const rating = target.dataset.rating || "";
-  if (!title || !rating) {
-    return;
-  }
-  target.textContent = "Saving...";
-  target.setAttribute("disabled", "true");
+refreshInsightsBtn.addEventListener("click", async () => {
+  setBusy(insightResult, "Loading...");
   try {
-    await api("/coach/feedback", "POST", {
-      advice_title: title,
-      rating,
-      persona: lastCoachContext.persona || "general",
-      context_focus: lastCoachContext.focus || null
-    });
-    target.textContent = rating === "useful" ? "Saved Useful" : "Saved Not Useful";
-    refreshQuality();
+    const result = await api("/insights/summary");
+    insightResult.innerHTML = `
+      ${renderCards(
+        [
+          ["Contradictions", `${((result.contradiction_rate || 0) * 100).toFixed(1)}%`],
+          ["Deduplication", `${((result.deduplication_rate || 0) * 100).toFixed(1)}%`],
+          ["Recurring Topics", (result.recurring_topics || []).slice(0, 5).map((r) => r.label).join(", ") || "None"]
+        ],
+        (row) => `
+          <article class="memory-card">
+            <p><strong>${escapeHtml(row[0])}</strong></p>
+            <p class="meta">${escapeHtml(row[1])}</p>
+          </article>
+        `
+      )}
+    `;
   } catch (error) {
-    target.textContent = "Retry";
+    insightResult.innerHTML = `<p class="meta">Insights failed: ${escapeHtml(error.message)}</p>`;
   }
 });
 
+refreshPersonasBtn.addEventListener("click", async () => {
+  setBusy(personaResult, "Loading...");
+  try {
+    const personas = await api("/coach/personas");
+    personaResult.innerHTML = renderCards(
+      personas,
+      (item) => `
+        <article class="memory-card">
+          <p><strong>${escapeHtml(item.persona)}</strong></p>
+          <p class="meta">Cadence: ${escapeHtml(item.cadence)}</p>
+        </article>
+      `
+    );
+  } catch (error) {
+    personaResult.innerHTML = `<p class="meta">Templates failed: ${escapeHtml(error.message)}</p>`;
+  }
+});
+
+refreshToday();
 refreshOnboarding();
 refreshQuality();

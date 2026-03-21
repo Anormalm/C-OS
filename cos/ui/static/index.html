@@ -17,112 +17,52 @@
     <main class="layout">
       <header class="hero">
         <p class="eyebrow">Cognitive OS</p>
-        <h1>Your Thinking Timeline</h1>
+        <h1>Think Better, Not Harder</h1>
         <p class="lead">
-          Write ideas in plain language. C-OS tracks what changed, when it changed, and what patterns repeat.
+          C-OS helps you keep track of what you think, what changed, and what to do next.
         </p>
       </header>
 
-      <section class="panel quick-start">
-        <h2>Start Here</h2>
-        <div class="steps">
-          <article>
-            <span>1</span>
-            <p>Paste a note in "Save A Thought".</p>
-          </article>
-          <article>
-            <span>2</span>
-            <p>Use "Ask Memory" to search what you already said.</p>
-          </article>
-          <article>
-            <span>3</span>
-            <p>Use "What Was True On Date" for time-based recall.</p>
-          </article>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Today</h2>
+          <button id="refreshToday" class="ghost" type="button">Refresh</button>
         </div>
+        <div id="todayResult" class="result-block"></div>
       </section>
 
-      <section class="grid">
-        <article class="panel">
-          <div class="panel-head">
-            <h2>Onboarding Progress</h2>
-            <button id="refreshOnboarding" class="ghost">Refresh</button>
-          </div>
-          <p class="meta">
-            New here? Use starter pack to preload example thinking patterns, then replace with your own notes.
-          </p>
-          <div class="actions">
-            <button id="loadStarterPack" type="button">Load Starter Pack</button>
-          </div>
-          <div id="onboardingResult" class="result-block"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <h2>Weekly Summary</h2>
-            <button id="runWeeklySummary" class="ghost">Generate</button>
-          </div>
-          <label for="weeklyDays">Lookback window</label>
-          <select id="weeklyDays">
-            <option value="7" selected>Last 7 days</option>
-            <option value="14">Last 14 days</option>
-            <option value="30">Last 30 days</option>
-          </select>
-
-          <label for="weeklyFocus">Focus (optional)</label>
-          <input id="weeklyFocus" placeholder="consistency, project completion, study..." />
-          <div id="weeklyResult" class="result-block"></div>
-        </article>
+      <section class="panel wizard">
+        <h2>First-Use Wizard</h2>
+        <div class="wizard-buttons">
+          <button id="wizardLoadStarter" type="button">1. Load Starter Data</button>
+          <button id="wizardAskFirst" type="button" class="ghost">2. Ask First Question</button>
+          <button id="wizardAdviceFirst" type="button" class="ghost">3. Get First Advice</button>
+        </div>
+        <div id="wizardResult" class="result-block"></div>
       </section>
 
-      <section class="grid">
+      <section class="primary-grid">
         <article class="panel">
-          <div class="panel-head">
-            <h2>Quality Dashboard</h2>
-            <button id="refreshQuality" class="ghost">Refresh</button>
-          </div>
-          <p class="meta">
-            Track system quality signals: onboarding progress, advice usefulness, retrieval volume, and latency.
-          </p>
-          <div id="qualityResult" class="result-block"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <h2>Evaluation Harness</h2>
-            <button id="runEvaluation" class="ghost">Run Benchmark</button>
-          </div>
-          <label for="evaluationTopK">Hit@K</label>
-          <select id="evaluationTopK">
-            <option value="1">1</option>
-            <option value="3" selected>3</option>
-            <option value="5">5</option>
-          </select>
-          <div id="evaluationResult" class="result-block"></div>
-        </article>
-      </section>
-
-      <section class="grid">
-        <article class="panel">
-          <h2>Save A Thought</h2>
+          <h2>Add Thought</h2>
           <form id="ingestForm">
-            <label for="source">Where is this from?</label>
+            <label for="source">Source (optional)</label>
             <input id="source" name="source" placeholder="Journal, project notes, meeting..." />
 
-            <label for="validFrom">When did this become true? (optional)</label>
+            <label for="validFrom">When was this true? (optional)</label>
             <input id="validFrom" name="validFrom" type="datetime-local" />
 
-            <label for="noteText">Your note</label>
+            <label for="noteText">Write your thought</label>
             <textarea
               id="noteText"
               name="noteText"
               rows="8"
-              placeholder="Example: 2025-01-02 Atlas is active. Atlas uses Neo4j."
+              placeholder="Example: Atlas uses Neo4j. Atlas is active."
               required
             ></textarea>
 
             <div class="actions">
               <button type="button" id="loadSample" class="ghost">Load Example</button>
-              <button type="submit">Save To Memory</button>
+              <button type="submit">Save</button>
             </div>
           </form>
           <pre id="ingestResult" class="result"></pre>
@@ -132,85 +72,126 @@
           <h2>Ask Memory</h2>
           <form id="retrieveForm">
             <label for="question">Question</label>
-            <input id="question" name="question" placeholder="What tools does Atlas use?" required />
+            <input id="question" name="question" placeholder="What am I working on most?" required />
 
-            <label for="mode">Type of question</label>
-            <select id="mode" name="mode">
-              <option value="factual">Specific fact</option>
-              <option value="exploratory" selected>Open exploration</option>
-              <option value="temporal">Time-aware</option>
-            </select>
-
-            <button type="submit">Find Answers</button>
+            <button type="submit">Search</button>
           </form>
           <div id="retrieveResult" class="result-block"></div>
         </article>
-      </section>
-
-      <section class="grid">
-        <article class="panel">
-          <h2>What Was True On Date</h2>
-          <form id="temporalForm">
-            <label for="atDate">Date and time</label>
-            <input id="atDate" name="atDate" type="datetime-local" required />
-
-            <label for="entity">Focus topic (optional)</label>
-            <input id="entity" name="entity" placeholder="Atlas, Python, Startup..." />
-
-            <button type="submit">Check Timeline</button>
-          </form>
-          <div id="temporalResult" class="result-block"></div>
-        </article>
 
         <article class="panel">
-          <div class="panel-head">
-            <h2>Insight Panel</h2>
-            <button id="refreshInsights" class="ghost">Refresh</button>
-          </div>
-          <div id="insightResult" class="result-block"></div>
-        </article>
-      </section>
-
-      <section class="grid">
-        <article class="panel">
-          <h2>Coach Mode</h2>
+          <h2>Get My Next Step</h2>
           <form id="coachForm">
-            <label for="persona">I am a...</label>
+            <label for="persona">Role</label>
             <select id="persona" name="persona">
-              <option value="general" selected>General user</option>
+              <option value="general" selected>General</option>
               <option value="student">Student</option>
               <option value="founder">Founder</option>
               <option value="manager">Manager</option>
               <option value="creator">Creator</option>
             </select>
 
-            <label for="focusArea">Focus area (optional)</label>
-            <input id="focusArea" name="focusArea" placeholder="Focus, consistency, project completion..." />
+            <label for="focusArea">Focus (optional)</label>
+            <input id="focusArea" name="focusArea" placeholder="consistency, shipping, study..." />
 
-            <label for="reflection">Optional reflection for today</label>
+            <label for="reflection">Reflection (optional)</label>
             <textarea
               id="reflection"
               name="reflection"
-              rows="6"
-              placeholder="Example: I kept delaying onboarding docs and started another side project."
+              rows="4"
+              placeholder="I keep stalling before finalizing tasks."
             ></textarea>
 
             <div class="actions">
-              <button type="button" id="coachAdviceBtn">Get Advice From Existing Memory</button>
-              <button type="button" id="coachCheckinBtn" class="ghost">Save Reflection + Get Advice</button>
+              <button type="button" id="coachAdviceBtn">Get Next Step</button>
+              <button type="button" id="coachCheckinBtn" class="ghost">Save Reflection + Advice</button>
             </div>
           </form>
           <div id="coachResult" class="result-block"></div>
         </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <h2>People Templates</h2>
-            <button id="refreshPersonas" class="ghost">Refresh</button>
-          </div>
-          <div id="personaResult" class="result-block"></div>
-        </article>
       </section>
+
+      <details class="advanced-panel">
+        <summary>Advanced Tools</summary>
+        <div class="grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Onboarding Details</h2>
+              <button id="refreshOnboarding" class="ghost" type="button">Refresh</button>
+            </div>
+            <button id="loadStarterPack" type="button">Load Starter Pack</button>
+            <div id="onboardingResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Weekly Summary</h2>
+              <button id="runWeeklySummary" class="ghost" type="button">Generate</button>
+            </div>
+            <label for="weeklyDays">Lookback window</label>
+            <select id="weeklyDays">
+              <option value="7" selected>Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30">Last 30 days</option>
+            </select>
+            <label for="weeklyFocus">Focus (optional)</label>
+            <input id="weeklyFocus" placeholder="consistency, project completion, study..." />
+            <div id="weeklyResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Timeline Query</h2>
+              <button id="runTemporalQuery" class="ghost" type="button">Run</button>
+            </div>
+            <form id="temporalForm">
+              <label for="atDate">Date and time</label>
+              <input id="atDate" name="atDate" type="datetime-local" required />
+              <label for="entity">Topic (optional)</label>
+              <input id="entity" name="entity" placeholder="Atlas, Python, Startup..." />
+            </form>
+            <div id="temporalResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Quality Dashboard</h2>
+              <button id="refreshQuality" class="ghost" type="button">Refresh</button>
+            </div>
+            <div id="qualityResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Evaluation Harness</h2>
+              <button id="runEvaluation" class="ghost" type="button">Run</button>
+            </div>
+            <label for="evaluationTopK">Hit@K</label>
+            <select id="evaluationTopK">
+              <option value="1">1</option>
+              <option value="3" selected>3</option>
+              <option value="5">5</option>
+            </select>
+            <div id="evaluationResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Insights</h2>
+              <button id="refreshInsights" class="ghost" type="button">Refresh</button>
+            </div>
+            <div id="insightResult" class="result-block"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Role Templates</h2>
+              <button id="refreshPersonas" class="ghost" type="button">Refresh</button>
+            </div>
+            <div id="personaResult" class="result-block"></div>
+          </article>
+        </div>
+      </details>
     </main>
     <script src="/static/app.js"></script>
   </body>
