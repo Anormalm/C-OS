@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=1000, ge=200)
     chunk_overlap: int = Field(default=120, ge=0)
     feedback_log_path: str | None = None
+    action_log_path: str | None = None
 
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"

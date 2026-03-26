@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from cos.core.models import (
+    ActionCompletionRequest,
     AdviceFeedbackRequest,
     AdviceRequest,
     CheckinRequest,
@@ -122,6 +123,14 @@ def create_router(runtime: COSRuntime, async_queue: AsyncIngestionQueue) -> APIR
     @router.post("/summary/weekly")
     def weekly_summary(request: WeeklySummaryRequest):
         return runtime.weekly_summary(request)
+
+    @router.get("/today/brief")
+    def today_brief():
+        return runtime.today_brief()
+
+    @router.post("/today/action")
+    def today_action(request: ActionCompletionRequest):
+        return runtime.complete_action(request)
 
     @router.post("/evaluation/run")
     def evaluation_run(request: EvaluationRunRequest):

@@ -67,3 +67,20 @@ def test_sprint3_quality_endpoints_smoke():
         dashboard = client.get("/quality/dashboard")
         assert dashboard.status_code == 200
         assert "recommendations" in dashboard.json()
+
+
+def test_today_brief_endpoints_smoke():
+    with TestClient(app) as client:
+        brief = client.get("/today/brief")
+        assert brief.status_code == 200
+        assert "next_action" in brief.json()
+
+        action = client.post(
+            "/today/action",
+            json={
+                "action_text": "Ship one small task",
+                "persona": "general",
+                "note": "smoke test",
+            },
+        )
+        assert action.status_code == 200

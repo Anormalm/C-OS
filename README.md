@@ -86,6 +86,8 @@ Advanced tools (timeline, quality, evaluation, templates) are available under th
 - `POST /coach/checkin`
 - `POST /coach/feedback`
 - `POST /summary/weekly`
+- `GET /today/brief`
+- `POST /today/action`
 - `POST /evaluation/run`
 - `GET /quality/dashboard`
 

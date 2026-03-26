@@ -6,6 +6,8 @@ from cos.configs.settings import Settings
 from cos.core.models import (
     AdviceRequest,
     AdviceResponse,
+    ActionCompletionEvent,
+    ActionCompletionRequest,
     AdviceFeedbackEvent,
     AdviceFeedbackRequest,
     AdviceFeedbackSummary,
@@ -22,10 +24,12 @@ from cos.core.models import (
     RetrievalResult,
     StatementNode,
     TemporalQueryRequest,
+    TodayBriefResponse,
     WeeklySummaryRequest,
     WeeklySummaryResponse,
 )
 from cos.diagnostics.metrics import LatencyTimer, MetricsRegistry
+from cos.inference.action_tracker import ActionTrackerService
 from cos.inference.evaluation import EvaluationService
 from cos.extraction.extractor import ExtractionService
 from cos.graph.base import GraphStore
@@ -36,6 +40,7 @@ from cos.inference.feedback import FeedbackService
 from cos.ingestion.service import IngestionService
 from cos.inference.insights import InsightService
 from cos.inference.onboarding import OnboardingService
+from cos.inference.today_brief import TodayBriefService
 from cos.inference.weekly_summary import WeeklySummaryService
 from cos.resolution.service import ResolutionService
 from cos.temporal.queries import TemporalQueryService
@@ -64,11 +69,18 @@ class COSRuntime:
         self.insights = InsightService(self.graph_store, self.metrics)
         self.advice = AdviceService(self.graph_store, self.insights)
         self.feedback = FeedbackService(log_path=settings.feedback_log_path)
+        self.action_tracker = ActionTrackerService(log_path=settings.action_log_path)
         self.onboarding = OnboardingService(self.metrics)
         self.weekly_summary_service = WeeklySummaryService(
             graph_store=self.graph_store,
             advice_service=self.advice,
             feedback_service=self.feedback,
+        )
+        self.today_service = TodayBriefService(
+            onboarding_service=self.onboarding,
+            weekly_summary_service=self.weekly_summary_service,
+            advice_service=self.advice,
+            action_tracker=self.action_tracker,
         )
         self.evaluation = EvaluationService(
             runtime_factory=lambda: COSRuntime(settings),
@@ -257,3 +269,13 @@ class COSRuntime:
                 last_evaluation=self.last_evaluation,
                 recommendations=recommendations,
             )
+
+    def today_brief(self) -> TodayBriefResponse:
+        with LatencyTimer(self.metrics, "today_brief_ms"):
+            self.metrics.inc("today_brief_requests")
+            return self.today_service.build()
+
+    def complete_action(self, request: ActionCompletionRequest) -> ActionCompletionEvent:
+        with LatencyTimer(self.metrics, "action_complete_ms"):
+            self.metrics.inc("actions_completed")
+            return self.action_tracker.complete(request)

@@ -266,3 +266,30 @@ class QualityDashboardResponse(BaseModel):
     latency_ms_avg: dict[str, float]
     last_evaluation: EvaluationRunResponse | None = None
     recommendations: list[str]
+
+
+class ActionCompletionRequest(BaseModel):
+    action_text: str = Field(min_length=1)
+    advice_title: str | None = None
+    persona: UserPersona = UserPersona.general
+    focus: str | None = None
+    note: str | None = None
+
+
+class ActionCompletionEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    created_at: datetime = Field(default_factory=utc_now)
+    action_text: str
+    advice_title: str | None = None
+    persona: UserPersona
+    focus: str | None = None
+    note: str | None = None
+
+
+class TodayBriefResponse(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    reminder: str
+    next_action: str
+    weekly_snippet: str
+    onboarding_progress: float
+    completed_actions_last_7d: int

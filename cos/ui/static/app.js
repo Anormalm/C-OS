@@ -115,7 +115,7 @@ function renderAdvice(adviceResponse, includeIngestion = null) {
       <p>${escapeHtml(primary.why)}</p>
       <p><strong>Next action:</strong> ${escapeHtml(nextAction)}</p>
       <div class="actions">
-        <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(primary.title)}" data-note="done" type="button">Done</button>
+        <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(primary.title)}" data-action="${escapeHtml(nextAction)}" data-note="done" type="button">Done</button>
         <button class="feedback-btn ghost" data-rating="not_useful" data-title="${escapeHtml(primary.title)}" type="button">Not Useful</button>
       </div>
       <details>
@@ -230,12 +230,22 @@ coachResult.addEventListener("click", async (event) => {
   const title = target.dataset.title || "";
   const rating = target.dataset.rating || "";
   const note = target.dataset.note || null;
+  const actionText = target.dataset.action || null;
   if (!title || !rating) {
     return;
   }
   target.textContent = "Saving...";
   target.setAttribute("disabled", "true");
   try {
+    if (note === "done" && actionText) {
+      await api("/today/action", "POST", {
+        action_text: actionText,
+        advice_title: title,
+        persona: lastCoachContext.persona || "general",
+        focus: lastCoachContext.focus || null,
+        note: "completed from UI"
+      });
+    }
     await api("/coach/feedback", "POST", {
       advice_title: title,
       rating,
@@ -254,37 +264,24 @@ coachResult.addEventListener("click", async (event) => {
 async function refreshToday() {
   setBusy(todayResult, "Loading your day...");
   try {
-    const [onboarding, weekly, advice] = await Promise.all([
-      api("/onboarding/status"),
-      api("/summary/weekly", "POST", { persona: "general", days: 7 }),
-      api("/coach/advice", "POST", { persona: "general" })
-    ]);
-
-    const reminder = onboarding.recommended_next_step || "Keep writing your thoughts.";
-    const nextAction =
-      advice.advice && advice.advice.length && advice.advice[0].actions.length
-        ? advice.advice[0].actions[0]
-        : "Generate advice to get a concrete action.";
-    const weeklySnippet =
-      weekly.highlights && weekly.highlights.length
-        ? weekly.highlights[0]
-        : "No weekly highlight yet.";
-    const progress = ((onboarding.progress_ratio || 0) * 100).toFixed(0);
+    const brief = await api("/today/brief");
+    const progress = ((brief.onboarding_progress || 0) * 100).toFixed(0);
 
     todayResult.innerHTML = `
       <div class="card-list">
         <article class="memory-card">
           <p><strong>Reminder</strong></p>
-          <p>${escapeHtml(reminder)}</p>
+          <p>${escapeHtml(brief.reminder || "")}</p>
         </article>
         <article class="memory-card">
           <p><strong>Next Step</strong></p>
-          <p>${escapeHtml(nextAction)}</p>
+          <p>${escapeHtml(brief.next_action || "")}</p>
         </article>
         <article class="memory-card">
           <p><strong>This Week</strong></p>
-          <p>${escapeHtml(weeklySnippet)}</p>
+          <p>${escapeHtml(brief.weekly_snippet || "")}</p>
           <p class="meta">Onboarding progress: ${progress}%</p>
+          <p class="meta">Completed actions (7d): ${brief.completed_actions_last_7d || 0}</p>
         </article>
       </div>
     `;
