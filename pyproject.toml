@@ -1,6 +1,6 @@
 [project]
 name = "cognitive-os"
-version = "0.1.0"
+version = "0.1.1"
 description = "C-OS: Persistent temporal cognitive operating system"
 readme = "README.md"
 requires-python = ">=3.10"
