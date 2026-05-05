@@ -17,62 +17,85 @@
     <main class="layout">
       <header class="hero">
         <p class="eyebrow">Cognitive OS</p>
-        <h1>Think Better, Not Harder</h1>
+        <h1>Your Thinking Workspace</h1>
         <p class="lead">
-          C-OS helps you keep track of what you think, what changed, and what to do next.
+          Capture ideas, find what matters, and get one clear next step.
         </p>
       </header>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Today</h2>
-          <button id="refreshToday" class="ghost" type="button">Refresh</button>
-        </div>
-        <div id="todayResult" class="result-block"></div>
-      </section>
-
       <section class="panel wizard">
-        <h2>First-Use Wizard</h2>
+        <h2>Start Here (2 minutes)</h2>
+        <p class="helper">If this is your first time, do these in order:</p>
         <div class="wizard-buttons">
-          <button id="wizardLoadStarter" type="button">1. Load Starter Data</button>
-          <button id="wizardAskFirst" type="button" class="ghost">2. Ask First Question</button>
-          <button id="wizardAdviceFirst" type="button" class="ghost">3. Get First Advice</button>
+          <button id="wizardLoadStarter" type="button">1. Add starter notes</button>
+          <button id="wizardAskFirst" type="button" class="ghost">2. Run first search</button>
+          <button id="wizardAdviceFirst" type="button" class="ghost">3. Get first advice</button>
         </div>
         <div id="wizardResult" class="result-block"></div>
       </section>
 
+      <section class="panel today-panel">
+        <div class="panel-head">
+          <h2>Today</h2>
+          <button id="refreshToday" class="ghost" type="button">Refresh</button>
+        </div>
+        <p class="helper">This is your quick daily snapshot.</p>
+        <div id="todayResult" class="result-block"></div>
+      </section>
+
       <section class="primary-grid">
         <article class="panel">
-          <h2>Add Thought</h2>
+          <h2>Capture a Thought</h2>
+          <p class="helper">Write a note in plain language. We structure it for you.</p>
           <form id="ingestForm">
-            <label for="source">Source (optional)</label>
-            <input id="source" name="source" placeholder="Journal, project notes, meeting..." />
-
-            <label for="validFrom">When was this true? (optional)</label>
-            <input id="validFrom" name="validFrom" type="datetime-local" />
-
-            <label for="noteText">Write your thought</label>
+            <label for="noteText">Your thought</label>
             <textarea
               id="noteText"
               name="noteText"
               rows="8"
-              placeholder="Example: Atlas uses Neo4j. Atlas is active."
+              placeholder="Example: Atlas is active. Atlas uses Neo4j. Atlas paused in March."
               required
             ></textarea>
 
+            <details class="optional-block">
+              <summary>Optional details</summary>
+              <label for="source">Source</label>
+              <input id="source" name="source" placeholder="Journal, meeting notes, project log..." />
+
+              <label for="validFrom">When was this true?</label>
+              <input id="validFrom" name="validFrom" type="datetime-local" />
+            </details>
+
             <div class="actions">
               <button type="button" id="loadSample" class="ghost">Load Example</button>
-              <button type="submit">Save</button>
+              <button type="submit">Save Thought</button>
             </div>
           </form>
           <pre id="ingestResult" class="result"></pre>
         </article>
 
         <article class="panel">
-          <h2>Ask Memory</h2>
+          <h2>Find in My Notes</h2>
+          <p class="helper">Ask a question and C-OS will search your memory graph.</p>
           <form id="retrieveForm">
             <label for="question">Question</label>
-            <input id="question" name="question" placeholder="What am I working on most?" required />
+            <input id="question" name="question" placeholder="What changed recently?" required />
+
+            <div class="suggestions" aria-label="Suggested questions">
+              <button type="button" class="suggestion-btn" data-query-suggestion="What am I focusing on most?">
+                Focus now
+              </button>
+              <button type="button" class="suggestion-btn" data-query-suggestion="What did I pause recently?">
+                Paused work
+              </button>
+              <button
+                type="button"
+                class="suggestion-btn"
+                data-query-suggestion="What is contradictory in my notes?"
+              >
+                Contradictions
+              </button>
+            </div>
 
             <button type="submit">Search</button>
           </form>
@@ -81,26 +104,30 @@
 
         <article class="panel">
           <h2>Get My Next Step</h2>
+          <p class="helper">Receive one practical recommendation based on your history.</p>
           <form id="coachForm">
-            <label for="persona">Role</label>
-            <select id="persona" name="persona">
-              <option value="general" selected>General</option>
-              <option value="student">Student</option>
-              <option value="founder">Founder</option>
-              <option value="manager">Manager</option>
-              <option value="creator">Creator</option>
-            </select>
-
-            <label for="focusArea">Focus (optional)</label>
-            <input id="focusArea" name="focusArea" placeholder="consistency, shipping, study..." />
-
             <label for="reflection">Reflection (optional)</label>
             <textarea
               id="reflection"
               name="reflection"
               rows="4"
-              placeholder="I keep stalling before finalizing tasks."
+              placeholder="Example: I keep stalling before finalizing tasks."
             ></textarea>
+
+            <details class="optional-block">
+              <summary>Optional guidance settings</summary>
+              <label for="persona">Role</label>
+              <select id="persona" name="persona">
+                <option value="general" selected>General</option>
+                <option value="student">Student</option>
+                <option value="founder">Founder</option>
+                <option value="manager">Manager</option>
+                <option value="creator">Creator</option>
+              </select>
+
+              <label for="focusArea">Focus</label>
+              <input id="focusArea" name="focusArea" placeholder="consistency, shipping, study..." />
+            </details>
 
             <div class="actions">
               <button type="button" id="coachAdviceBtn">Get Next Step</button>
@@ -113,6 +140,7 @@
 
       <details class="advanced-panel">
         <summary>Advanced Tools</summary>
+        <p class="helper">Use these when you want deeper diagnostics and analytics.</p>
         <div class="grid">
           <article class="panel">
             <div class="panel-head">

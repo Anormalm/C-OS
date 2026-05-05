@@ -35,6 +35,20 @@ Open:
 - UI: `http://127.0.0.1:8000/`
 - API docs: `http://127.0.0.1:8000/docs`
 
+### Optional: DeepSeek v4 Pro Integration
+
+C-OS runs fully offline-style by default (deterministic heuristics).  
+To enable LLM-enhanced coaching language with DeepSeek:
+
+```bash
+export COS_LLM_PROVIDER=deepseek
+export COS_LLM_API_KEY=your_deepseek_api_key
+export COS_LLM_MODEL=deepseek-v4-pro
+export COS_LLM_BASE_URL=https://api.deepseek.com
+```
+
+Then restart the API server. If credentials are missing or calls fail, C-OS safely falls back to built-in logic.
+
 ### Docker
 
 ```bash
@@ -73,7 +87,7 @@ python -m cos.experiments.load_sample_dataset
 
 1. Add Thought
 2. Ask Memory
-3. Get My Next Step
+3. Get One Next Step
 
 Advanced tools (timeline, quality, evaluation, templates) are available under the `Advanced Tools` drawer.
 
@@ -82,6 +96,7 @@ Advanced tools (timeline, quality, evaluation, templates) are available under th
 - `POST /ingest/text`
 - `POST /query/retrieve`
 - `POST /query/temporal`
+- `POST /coach/next-step`
 - `POST /coach/advice`
 - `POST /coach/checkin`
 - `POST /coach/feedback`

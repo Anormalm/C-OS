@@ -82,6 +82,10 @@ def create_router(runtime: COSRuntime, async_queue: AsyncIngestionQueue) -> APIR
     def coach_advice(request: AdviceRequest):
         return runtime.generate_advice(request)
 
+    @router.post("/coach/next-step")
+    def coach_next_step(request: AdviceRequest):
+        return runtime.next_step(request)
+
     @router.post("/coach/checkin")
     def coach_checkin(request: CheckinRequest):
         return runtime.checkin(request)
@@ -143,6 +147,10 @@ def create_router(runtime: COSRuntime, async_queue: AsyncIngestionQueue) -> APIR
     @router.get("/diagnostics/metrics")
     def metrics():
         return runtime.metrics.snapshot()
+
+    @router.get("/diagnostics/llm")
+    def llm_status():
+        return runtime.llm_status()
 
     @router.get("/graph/entity/{entity_id}")
     def graph_neighbors(entity_id: str, hops: int = 1, limit: int = 50):

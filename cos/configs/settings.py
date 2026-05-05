@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=120, ge=0)
     feedback_log_path: str | None = None
     action_log_path: str | None = None
+    llm_provider: str = "none"
+    llm_api_key: str | None = None
+    llm_model: str = "deepseek-v4-pro"
+    llm_base_url: str = "https://api.deepseek.com"
+    llm_timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
+    llm_reasoning_effort: str = "high"
 
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"

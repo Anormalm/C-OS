@@ -19,6 +19,7 @@ from cos.core.models import (
     OnboardingStatus,
     IngestionRequest,
     IngestionResponse,
+    NextStepResponse,
     QualityDashboardResponse,
     RetrievalRequest,
     RetrievalResult,
@@ -39,6 +40,8 @@ from cos.inference.advice import AdviceService
 from cos.inference.feedback import FeedbackService
 from cos.ingestion.service import IngestionService
 from cos.inference.insights import InsightService
+from cos.inference.llm import DeepSeekClient, JSONLLMClient
+from cos.inference.next_step import NextStepService
 from cos.inference.onboarding import OnboardingService
 from cos.inference.today_brief import TodayBriefService
 from cos.inference.weekly_summary import WeeklySummaryService
@@ -59,6 +62,7 @@ class COSRuntime:
         self.graph_store = self._build_graph_store()
         self.vector_store = self._build_vector_store()
         self.embedder = HashingEmbedder(dim=settings.embedding_dim)
+        self.llm_client = self._build_llm_client()
 
         self.ingestion = IngestionService(settings)
         self.extraction = ExtractionService()
@@ -67,7 +71,8 @@ class COSRuntime:
         self.trajectories = TrajectoryAnalyzer(self.graph_store)
         self.retriever = HybridRetriever(self.graph_store, self.vector_store, self.embedder)
         self.insights = InsightService(self.graph_store, self.metrics)
-        self.advice = AdviceService(self.graph_store, self.insights)
+        self.advice = AdviceService(self.graph_store, self.insights, llm_client=self.llm_client)
+        self.next_step_service = NextStepService(self.advice)
         self.feedback = FeedbackService(log_path=settings.feedback_log_path)
         self.action_tracker = ActionTrackerService(log_path=settings.action_log_path)
         self.onboarding = OnboardingService(self.metrics)
@@ -79,7 +84,7 @@ class COSRuntime:
         self.today_service = TodayBriefService(
             onboarding_service=self.onboarding,
             weekly_summary_service=self.weekly_summary_service,
-            advice_service=self.advice,
+            next_step_service=self.next_step_service,
             action_tracker=self.action_tracker,
         )
         self.evaluation = EvaluationService(
@@ -101,6 +106,20 @@ class COSRuntime:
         if self.settings.vector_backend.lower() == "faiss":
             return FaissVectorStore(dim=self.settings.embedding_dim)
         return InMemoryVectorStore()
+
+    def _build_llm_client(self) -> JSONLLMClient | None:
+        provider = self.settings.llm_provider.lower().strip()
+        if provider != "deepseek":
+            return None
+        if not self.settings.llm_api_key:
+            return None
+        return DeepSeekClient(
+            api_key=self.settings.llm_api_key,
+            model=self.settings.llm_model,
+            base_url=self.settings.llm_base_url,
+            timeout_seconds=self.settings.llm_timeout_seconds,
+            reasoning_effort=self.settings.llm_reasoning_effort,
+        )
 
     def ingest_text(self, request: IngestionRequest) -> IngestionResponse:
         with LatencyTimer(self.metrics, "ingestion_ms"):
@@ -194,6 +213,11 @@ class COSRuntime:
         with LatencyTimer(self.metrics, "advice_ms"):
             return self.advice.generate(request)
 
+    def next_step(self, request: AdviceRequest) -> NextStepResponse:
+        with LatencyTimer(self.metrics, "next_step_ms"):
+            self.metrics.inc("next_step_requests")
+            return self.next_step_service.generate(request)
+
     def checkin(self, request: CheckinRequest) -> CheckinResponse:
         self.metrics.inc("coach_checkins")
         ingestion = self.ingest_text(
@@ -279,3 +303,13 @@ class COSRuntime:
         with LatencyTimer(self.metrics, "action_complete_ms"):
             self.metrics.inc("actions_completed")
             return self.action_tracker.complete(request)
+
+    def llm_status(self) -> dict[str, object]:
+        provider = self.settings.llm_provider.lower().strip()
+        enabled = self.llm_client is not None
+        return {
+            "provider": provider,
+            "enabled": enabled,
+            "model": self.settings.llm_model if enabled else None,
+            "base_url": self.settings.llm_base_url if enabled else None,
+        }

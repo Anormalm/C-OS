@@ -160,6 +160,19 @@ class AdviceResponse(BaseModel):
     caution: str
 
 
+class NextStepResponse(BaseModel):
+    generated_at: datetime = Field(default_factory=utc_now)
+    persona: UserPersona
+    focus: str | None = None
+    title: str
+    action: str
+    why: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    estimated_minutes: int = Field(ge=5, le=120)
+    alternatives: list[str] = Field(default_factory=list)
+    caution: str
+
+
 class CheckinRequest(BaseModel):
     reflection: str = Field(min_length=1)
     persona: UserPersona = UserPersona.general

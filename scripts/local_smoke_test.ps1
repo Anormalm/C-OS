@@ -98,6 +98,10 @@ try {
         persona = "general"
         focus = "consistency"
     }
+    $nextStep = Invoke-ApiJson -Method "POST" -Url "$baseUrl/coach/next-step" -Body @{
+        persona = "general"
+        focus = "consistency"
+    }
     $weekly = Invoke-ApiJson -Method "POST" -Url "$baseUrl/summary/weekly" -Body @{
         persona = "general"
         days = 7
@@ -112,6 +116,7 @@ try {
     Write-Host ("- Starter notes ingested: " + $starter.ingested)
     Write-Host ("- Retrieval results: " + ($retrieve | Measure-Object).Count)
     Write-Host ("- Coach advice items: " + ($coach.advice | Measure-Object).Count)
+    Write-Host ("- Coach next-step title: " + $nextStep.title)
     Write-Host ("- Weekly highlights: " + ($weekly.highlights | Measure-Object).Count)
     Write-Host ("- Eval hybrid Hit@3: " + $eval.hybrid_hit_at_k)
     Write-Host ("- Quality recommendations: " + ($quality.recommendations | Measure-Object).Count)

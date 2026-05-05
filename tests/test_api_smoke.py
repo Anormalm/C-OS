@@ -39,6 +39,15 @@ def test_coach_advice_smoke():
     assert "caution" in data
 
 
+def test_coach_next_step_smoke():
+    with TestClient(app) as client:
+        response = client.post("/coach/next-step", json={"persona": "general", "focus": "consistency"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "title" in data
+    assert "action" in data
+
+
 def test_sprint2_endpoints_smoke():
     with TestClient(app) as client:
         onboarding = client.get("/onboarding/status")
@@ -84,3 +93,12 @@ def test_today_brief_endpoints_smoke():
             },
         )
         assert action.status_code == 200
+
+
+def test_llm_status_endpoint_smoke():
+    with TestClient(app) as client:
+        status = client.get("/diagnostics/llm")
+    assert status.status_code == 200
+    data = status.json()
+    assert "provider" in data
+    assert "enabled" in data

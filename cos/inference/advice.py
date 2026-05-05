@@ -14,6 +14,7 @@ from cos.core.models import (
     UserPersona,
 )
 from cos.inference.insights import InsightService
+from cos.inference.llm import JSONLLMClient
 
 
 PERSONA_GUIDES: dict[UserPersona, dict[str, str]] = {
@@ -44,6 +45,7 @@ PERSONA_GUIDES: dict[UserPersona, dict[str, str]] = {
 class AdviceService:
     graph_store: object
     insight_service: InsightService
+    llm_client: JSONLLMClient | None = None
 
     def persona_catalog(self) -> list[dict[str, str]]:
         return [
@@ -166,13 +168,15 @@ class AdviceService:
             "This is reflective productivity guidance based on your notes; "
             "it is not medical, legal, or financial advice."
         )
-        return AdviceResponse(
+        base_response = AdviceResponse(
             generated_at=datetime.now(timezone.utc),
             persona=request.persona,
             focus=request.focus,
             advice=advice,
             caution=caution,
         )
+        rewritten = self._rewrite_with_llm(base_response)
+        return rewritten or base_response
 
     def _baseline_advice(self, persona: UserPersona, statements: list[StatementNode]) -> list[AdviceItem]:
         if statements:
@@ -238,6 +242,79 @@ class AdviceService:
     def _label(self, entity_id: str) -> str:
         entity = self.graph_store.get_entity(entity_id)
         return entity.name if entity else entity_id
+
+    def _rewrite_with_llm(self, response: AdviceResponse) -> AdviceResponse | None:
+        if not self.llm_client or not response.advice:
+            return None
+
+        compact = [
+            {
+                "title": item.title,
+                "why": item.why,
+                "actions": item.actions,
+                "priority": item.priority.value,
+                "confidence": item.confidence,
+                "evidence": item.evidence,
+            }
+            for item in response.advice
+        ]
+        system_prompt = (
+            "You are improving user-facing coaching language for non-technical users. "
+            "Do not invent new facts. Keep advice practical and short."
+        )
+        user_prompt = (
+            "Rewrite the advice list in simpler plain English while preserving intent.\n"
+            "Return strict JSON as: {\"advice\": [{\"title\": str, \"why\": str, \"actions\": [str]}], \"caution\": str}\n"
+            f"Input JSON:\n{compact}"
+        )
+        rewritten = self.llm_client.generate_json(system_prompt=system_prompt, user_prompt=user_prompt)
+        if not rewritten:
+            return None
+
+        rows = rewritten.get("advice")
+        if not isinstance(rows, list) or not rows:
+            return None
+
+        merged: list[AdviceItem] = []
+        for idx, original in enumerate(response.advice):
+            if idx >= len(rows):
+                merged.append(original)
+                continue
+            row = rows[idx]
+            if not isinstance(row, dict):
+                merged.append(original)
+                continue
+
+            title = str(row.get("title") or original.title).strip()
+            why = str(row.get("why") or original.why).strip()
+            actions = row.get("actions")
+            if isinstance(actions, list):
+                cleaned_actions = [str(action).strip() for action in actions if str(action).strip()]
+                if not cleaned_actions:
+                    cleaned_actions = original.actions
+            else:
+                cleaned_actions = original.actions
+
+            merged.append(
+                AdviceItem(
+                    title=title,
+                    why=why,
+                    actions=cleaned_actions[:3],
+                    evidence=original.evidence,
+                    priority=original.priority,
+                    confidence=original.confidence,
+                )
+            )
+
+        caution = rewritten.get("caution")
+        caution_text = str(caution).strip() if caution else response.caution
+        return AdviceResponse(
+            generated_at=response.generated_at,
+            persona=response.persona,
+            focus=response.focus,
+            advice=merged,
+            caution=caution_text,
+        )
 
     @staticmethod
     def _dedupe_advice(advice: list[AdviceItem]) -> list[AdviceItem]:

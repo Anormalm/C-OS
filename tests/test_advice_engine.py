@@ -35,3 +35,18 @@ def test_checkin_returns_ingestion_and_advice():
     )
     assert response.ingestion.statement_count >= 0
     assert response.advice.persona == UserPersona.manager
+
+
+def test_next_step_returns_single_action():
+    runtime = COSRuntime(Settings())
+    runtime.ingest_text(
+        IngestionRequest(
+            text="I pause projects when milestones are unclear. Atlas is active.",
+            source_type="note",
+            source_uri="test://next-step",
+        )
+    )
+    result = runtime.next_step(AdviceRequest(persona=UserPersona.general, focus="consistency"))
+    assert result.title
+    assert result.action
+    assert result.estimated_minutes >= 5

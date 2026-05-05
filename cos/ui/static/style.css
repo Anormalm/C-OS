@@ -1,13 +1,13 @@
 :root {
-  --bg: #f8f4e8;
-  --bg-2: #efe6d2;
-  --card: #fffdf7;
-  --text: #1f2a2a;
-  --muted: #56615f;
+  --bg: #f7f5ef;
+  --bg-2: #f1efe7;
+  --card: #fffef9;
+  --text: #1e2a2b;
+  --muted: #5b6866;
   --accent: #0f766e;
-  --accent-2: #c2410c;
-  --border: #d8cebb;
-  --shadow: 0 12px 36px rgba(42, 51, 49, 0.12);
+  --accent-2: #b45309;
+  --border: #ddd6c4;
+  --shadow: 0 8px 24px rgba(42, 51, 49, 0.09);
 }
 
 * {
@@ -19,8 +19,7 @@ body {
   min-height: 100vh;
   font-family: "Manrope", sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at 90% -20%, #ffd39f 2%, transparent 38%),
-    radial-gradient(circle at -10% 0%, #9ee8dd 2%, transparent 35%),
+  background: radial-gradient(circle at 100% -30%, #ffe6bf 1%, transparent 28%),
     linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
 }
 
@@ -29,18 +28,18 @@ body {
   inset: 0;
   pointer-events: none;
   background-image: linear-gradient(
-      rgba(15, 118, 110, 0.05) 1px,
+      rgba(15, 118, 110, 0.04) 1px,
       transparent 1px
     ),
-    linear-gradient(90deg, rgba(15, 118, 110, 0.05) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(15, 118, 110, 0.04) 1px, transparent 1px);
   background-size: 32px 32px;
-  opacity: 0.35;
+  opacity: 0.2;
 }
 
 .layout {
   width: min(1120px, 94vw);
   margin: 0 auto;
-  padding: 28px 0 42px;
+  padding: 24px 0 42px;
 }
 
 .hero {
@@ -64,56 +63,33 @@ h2 {
 h1 {
   font-size: clamp(2rem, 5vw, 3.4rem);
   line-height: 1.05;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .lead {
   max-width: 70ch;
   color: var(--muted);
-  font-size: 1.04rem;
+  font-size: 1.02rem;
+  margin-bottom: 0;
+}
+
+.helper {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .panel {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: var(--shadow);
   animation: rise 620ms ease both;
 }
 
-.quick-start {
-  margin: 20px 0;
-}
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+.today-panel {
   margin-top: 14px;
-}
-
-.steps article {
-  background: #f6f7ef;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.steps span {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 999px;
-  font-weight: 700;
-  background: var(--accent);
-  color: #fff;
-}
-
-.steps p {
-  margin: 10px 0 0;
 }
 
 .grid {
@@ -131,7 +107,7 @@ h1 {
 }
 
 .wizard {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .wizard-buttons {
@@ -189,13 +165,14 @@ button:active {
 }
 
 button.ghost {
-  background: #fff3e5;
+  background: #fff5e8;
   color: var(--accent-2);
-  border: 1px solid #efc79e;
+  border: 1px solid #efcca8;
 }
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 12px;
 }
@@ -204,8 +181,8 @@ button.ghost {
 .result-block {
   margin-top: 14px;
   border-radius: 12px;
-  background: #f7f9fb;
-  border: 1px solid #d8dee6;
+  background: #f7f8f4;
+  border: 1px solid #dde3dc;
   padding: 12px;
   min-height: 52px;
   overflow-x: auto;
@@ -231,6 +208,7 @@ button.ghost {
 .meta {
   color: var(--muted);
   font-size: 0.88rem;
+  margin-bottom: 0;
 }
 
 .panel-head {
@@ -246,9 +224,9 @@ button.ghost {
 .advanced-panel summary {
   list-style: none;
   cursor: pointer;
-  background: #fff3e5;
+  background: #fff5e8;
   color: var(--accent-2);
-  border: 1px solid #efc79e;
+  border: 1px solid #efcca8;
   border-radius: 12px;
   padding: 10px 12px;
   font-weight: 700;
@@ -260,6 +238,40 @@ button.ghost {
 
 .advanced-panel[open] summary {
   margin-bottom: 12px;
+}
+
+.optional-block {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #faf9f4;
+}
+
+.optional-block summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.optional-block[open] summary {
+  margin-bottom: 8px;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.suggestion-btn {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8f4f2;
+  color: #125a54;
+  border: 1px solid #b6d7d2;
+  font-size: 0.85rem;
 }
 
 @keyframes rise {
@@ -274,7 +286,6 @@ button.ghost {
 }
 
 @media (max-width: 940px) {
-  .steps,
   .grid,
   .primary-grid,
   .wizard-buttons {

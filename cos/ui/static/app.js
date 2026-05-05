@@ -32,8 +32,11 @@ const refreshPersonasBtn = document.getElementById("refreshPersonas");
 const wizardLoadStarterBtn = document.getElementById("wizardLoadStarter");
 const wizardAskFirstBtn = document.getElementById("wizardAskFirst");
 const wizardAdviceFirstBtn = document.getElementById("wizardAdviceFirst");
+const suggestionButtons = document.querySelectorAll("[data-query-suggestion]");
 
 let lastCoachContext = { persona: "general", focus: null };
+const DRAFT_NOTE_KEY = "cos_draft_note";
+const DRAFT_REFLECTION_KEY = "cos_draft_reflection";
 
 async function api(path, method = "GET", body = null) {
   const options = { method, headers: {} };
@@ -129,6 +132,29 @@ function renderAdvice(adviceResponse, includeIngestion = null) {
   `;
 }
 
+function renderNextStep(stepResponse) {
+  const alternatives = (stepResponse.alternatives || []).filter(Boolean);
+  const alternativesText = alternatives.length ? alternatives.join(" | ") : "No alternatives yet.";
+  return `
+    <article class="memory-card" data-advice-title="${escapeHtml(stepResponse.title)}">
+      <p><strong>${escapeHtml(stepResponse.title)}</strong></p>
+      <p>${escapeHtml(stepResponse.why)}</p>
+      <p><strong>Do this next (${escapeHtml(stepResponse.estimated_minutes)} min):</strong> ${escapeHtml(stepResponse.action)}</p>
+      <div class="actions">
+        <button class="feedback-btn" data-rating="useful" data-title="${escapeHtml(stepResponse.title)}" data-action="${escapeHtml(stepResponse.action)}" data-note="done" type="button">I did this</button>
+        <button class="feedback-btn ghost" data-rating="not_useful" data-title="${escapeHtml(stepResponse.title)}" type="button">Not Useful</button>
+        <button class="more-options-btn ghost" type="button">Show More Options</button>
+      </div>
+      <details>
+        <summary>Why this suggestion</summary>
+        <p class="meta">Confidence: ${((stepResponse.confidence || 0) * 100).toFixed(0)}%</p>
+        <p class="meta">Alternative directions: ${escapeHtml(alternativesText)}</p>
+      </details>
+      <p class="meta">${escapeHtml(stepResponse.caution || "")}</p>
+    </article>
+  `;
+}
+
 loadSampleBtn.addEventListener("click", () => {
   document.getElementById("source").value = "journal";
   document.getElementById("noteText").value = [
@@ -137,6 +163,7 @@ loadSampleBtn.addEventListener("click", () => {
     "Atlas requires GPU infrastructure.",
     "2025-03-01 Atlas is paused."
   ].join("\n");
+  localStorage.setItem(DRAFT_NOTE_KEY, document.getElementById("noteText").value);
 });
 
 ingestForm.addEventListener("submit", async (event) => {
@@ -152,6 +179,10 @@ ingestForm.addEventListener("submit", async (event) => {
     };
     const result = await api("/ingest/text", "POST", payload);
     ingestResult.textContent = `Saved ${result.statement_count} statements.`;
+    localStorage.removeItem(DRAFT_NOTE_KEY);
+    document.getElementById("noteText").value = "";
+    document.getElementById("source").value = "";
+    document.getElementById("validFrom").value = "";
     await refreshToday();
   } catch (error) {
     ingestResult.textContent = `Save failed: ${error.message}`;
@@ -196,8 +227,8 @@ coachAdviceBtn.addEventListener("click", async () => {
   try {
     const payload = coachPayload();
     lastCoachContext = payload;
-    const result = await api("/coach/advice", "POST", payload);
-    coachResult.innerHTML = renderAdvice(result);
+    const result = await api("/coach/next-step", "POST", payload);
+    coachResult.innerHTML = renderNextStep(result);
     await refreshToday();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Advice failed: ${escapeHtml(error.message)}</p>`;
@@ -216,6 +247,8 @@ coachCheckinBtn.addEventListener("click", async () => {
     lastCoachContext = payload;
     const result = await api("/coach/checkin", "POST", payload);
     coachResult.innerHTML = renderAdvice(result.advice, result.ingestion);
+    localStorage.removeItem(DRAFT_REFLECTION_KEY);
+    document.getElementById("reflection").value = "";
     await refreshToday();
   } catch (error) {
     coachResult.innerHTML = `<p class="meta">Check-in failed: ${escapeHtml(error.message)}</p>`;
@@ -224,7 +257,26 @@ coachCheckinBtn.addEventListener("click", async () => {
 
 coachResult.addEventListener("click", async (event) => {
   const target = event.target;
-  if (!(target instanceof HTMLElement) || !target.classList.contains("feedback-btn")) {
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  if (target.classList.contains("more-options-btn")) {
+    setBusy(coachResult, "Loading more options...");
+    try {
+      const result = await api("/coach/advice", "POST", {
+        persona: lastCoachContext.persona || "general",
+        focus: lastCoachContext.focus || null,
+      });
+      coachResult.innerHTML = renderAdvice(result);
+      await refreshToday();
+    } catch (error) {
+      coachResult.innerHTML = `<p class="meta">Could not load more options: ${escapeHtml(error.message)}</p>`;
+    }
+    return;
+  }
+
+  if (!target.classList.contains("feedback-btn")) {
     return;
   }
   const title = target.dataset.title || "";
@@ -266,20 +318,23 @@ async function refreshToday() {
   try {
     const brief = await api("/today/brief");
     const progress = ((brief.onboarding_progress || 0) * 100).toFixed(0);
+    const habitState =
+      Number(progress) >= 80 ? "Strong rhythm" : Number(progress) >= 40 ? "Building momentum" : "Getting started";
 
     todayResult.innerHTML = `
       <div class="card-list">
+        <article class="memory-card">
+          <p><strong>Do this now</strong></p>
+          <p>${escapeHtml(brief.next_action || "No immediate action yet. Ask for advice to generate one.")}</p>
+        </article>
         <article class="memory-card">
           <p><strong>Reminder</strong></p>
           <p>${escapeHtml(brief.reminder || "")}</p>
         </article>
         <article class="memory-card">
-          <p><strong>Next Step</strong></p>
-          <p>${escapeHtml(brief.next_action || "")}</p>
-        </article>
-        <article class="memory-card">
-          <p><strong>This Week</strong></p>
+          <p><strong>This Week Snapshot</strong></p>
           <p>${escapeHtml(brief.weekly_snippet || "")}</p>
+          <p class="meta">Habit status: ${habitState}</p>
           <p class="meta">Onboarding progress: ${progress}%</p>
           <p class="meta">Completed actions (7d): ${brief.completed_actions_last_7d || 0}</p>
         </article>
@@ -329,17 +384,18 @@ loadStarterPackBtn.addEventListener("click", loadStarterPack);
 wizardLoadStarterBtn.addEventListener("click", loadStarterPack);
 
 wizardAskFirstBtn.addEventListener("click", async () => {
-  document.getElementById("question").value = "What does Atlas use?";
-  await runSearch("What does Atlas use?");
-  wizardResult.innerHTML = `<p class="meta">First question complete.</p>`;
+  const query = "What changed recently?";
+  document.getElementById("question").value = query;
+  await runSearch(query);
+  wizardResult.innerHTML = `<p class="meta">Step 2 complete. You ran your first search.</p>`;
 });
 
 wizardAdviceFirstBtn.addEventListener("click", async () => {
   setBusy(wizardResult, "Generating first advice...");
   try {
-    const result = await api("/coach/advice", "POST", { persona: "general" });
-    coachResult.innerHTML = renderAdvice(result);
-    wizardResult.innerHTML = `<p class="meta">First advice generated.</p>`;
+    const result = await api("/coach/next-step", "POST", { persona: "general" });
+    coachResult.innerHTML = renderNextStep(result);
+    wizardResult.innerHTML = `<p class="meta">Step 3 complete. Your first next-step recommendation is ready.</p>`;
     await refreshToday();
   } catch (error) {
     wizardResult.innerHTML = `<p class="meta">Advice failed: ${escapeHtml(error.message)}</p>`;
@@ -503,3 +559,34 @@ refreshPersonasBtn.addEventListener("click", async () => {
 refreshToday();
 refreshOnboarding();
 refreshQuality();
+
+const noteField = document.getElementById("noteText");
+const reflectionField = document.getElementById("reflection");
+const savedNoteDraft = localStorage.getItem(DRAFT_NOTE_KEY);
+const savedReflectionDraft = localStorage.getItem(DRAFT_REFLECTION_KEY);
+
+if (savedNoteDraft && !noteField.value) {
+  noteField.value = savedNoteDraft;
+}
+if (savedReflectionDraft && !reflectionField.value) {
+  reflectionField.value = savedReflectionDraft;
+}
+
+noteField.addEventListener("input", () => {
+  localStorage.setItem(DRAFT_NOTE_KEY, noteField.value);
+});
+
+reflectionField.addEventListener("input", () => {
+  localStorage.setItem(DRAFT_REFLECTION_KEY, reflectionField.value);
+});
+
+suggestionButtons.forEach((button) => {
+  button.addEventListener("click", async () => {
+    const query = button.dataset.querySuggestion || "";
+    if (!query) {
+      return;
+    }
+    document.getElementById("question").value = query;
+    await runSearch(query);
+  });
+});
